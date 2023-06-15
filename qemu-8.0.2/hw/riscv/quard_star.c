@@ -26,63 +26,19 @@
 
 
 static const MemMapEntry quard_star_memmap[] = {
-    [QUARD_STAR_MROM]  = {        0x0,        0x8000 },
+    [QUARD_STAR_MROM]  = {        0x0,        0x8000 },   
     [QUARD_STAR_SRAM]  = {     0x8000,        0x8000 },
     [QUARD_STAR_UART0] = { 0x10000000,         0x100 },
-    [QUARD_STAR_FLASH] = { 0x20000000,     0x2000000 },
-    [QUARD_STAR_DRAM]  = { 0x80000000,          0x80 },
+    [QUARD_STAR_FLASH] = { 0x20000000,     0x2000000 },   
+    [QUARD_STAR_DRAM]  = { 0x80000000,          0x80 },   
 };
 
-/* 创建flash并映射 */
-static void quard_star_flash_create(MachineState *machine)
+/*创建CPU */
+static void quard_star_cpu_create(MachineState *machine)
 {
-    #define QUARD_STAR_FLASH_SECTOR_SIZE (256 * KiB)  //0x40000
-    QuardStarState *s = RISCV_VIRT_MACHINE(machine);
-    MemoryRegion *system_memory = get_system_memory();
-    DeviceState *dev = qdev_new(TYPE_PFLASH_CFI01);
-    uint64_t flash_sector_size = 256 * KiB;
-    qdev_prop_set_uint64(dev, "sector-length", QUARD_STAR_FLASH_SECTOR_SIZE);
-    qdev_prop_set_uint8(dev, "width", 4);
-    qdev_prop_set_uint8(dev, "device-width", 2);
-    qdev_prop_set_bit(dev, "big-endian", false);
-    qdev_prop_set_uint16(dev, "id0", 0x89);
-    qdev_prop_set_uint16(dev, "id1", 0x18);
-    qdev_prop_set_uint16(dev, "id2", 0x00);
-    qdev_prop_set_uint16(dev, "id3", 0x00);
-    qdev_prop_set_string(dev, "name","quard-star.flash0");
-
-    object_property_add_child(OBJECT(s), "quard-star.flash0", OBJECT(dev));
-    object_property_add_alias(OBJECT(s), "pflash0",
-                              OBJECT(dev), "drive");
-
-    s->flash = PFLASH_CFI01(dev);
-    pflash_cfi01_legacy_drive(s->flash,drive_get(IF_PFLASH, 0, 0));
-
-    hwaddr flashsize = quard_star_memmap[QUARD_STAR_FLASH].size;
-    hwaddr flashbase = quard_star_memmap[QUARD_STAR_FLASH].base;
-
-    assert(QEMU_IS_ALIGNED(flashsize, QUARD_STAR_FLASH_SECTOR_SIZE));
-    assert(flashsize / QUARD_STAR_FLASH_SECTOR_SIZE <= UINT32_MAX);
-    qdev_prop_set_uint32(dev, "num-blocks", flashsize / QUARD_STAR_FLASH_SECTOR_SIZE);
-    sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), &error_fatal);
-
-    memory_region_add_subregion(system_memory, flashbase,
-                                sysbus_mmio_get_region(SYS_BUS_DEVICE(dev),
-                                                       0));
-}
-
-/*  创建内存 */
-static void quard_star_memory_create(MachineState *machine)
-{
-    QuardStarState *s = RISCV_VIRT_MACHINE(machine);
-    MemoryRegion *system_memory = get_system_memory();
-    //分配三片存储空间 dram sram mrom
-    MemoryRegion *dram_mem = g_new(MemoryRegion, 1);  //DRAM
-    MemoryRegion *sram_mem = g_new(MemoryRegion, 1);  //SRAM
-    MemoryRegion *mask_rom = g_new(MemoryRegion, 1);  //MROM  
-
     int i, base_hartid, hart_count;
     char *soc_name;
+    QuardStarState *s = RISCV_VIRT_MACHINE(machine);
 
     if (QUARD_STAR_SOCKETS_MAX < riscv_socket_count(machine)) {
         error_report("number of sockets/nodes should be less than %d",
@@ -120,6 +76,54 @@ static void quard_star_memory_create(MachineState *machine)
                                 hart_count, &error_abort);
         sysbus_realize(SYS_BUS_DEVICE(&s->soc[i]), &error_abort);
     }
+}
+/* 创建flash并映射 */
+static void quard_star_flash_create(MachineState *machine)
+{
+    #define QUARD_STAR_FLASH_SECTOR_SIZE (256 * KiB)  //0x40000
+    QuardStarState *s = RISCV_VIRT_MACHINE(machine);
+    MemoryRegion *system_memory = get_system_memory();
+    DeviceState *dev = qdev_new(TYPE_PFLASH_CFI01);
+
+    qdev_prop_set_uint64(dev, "sector-length", QUARD_STAR_FLASH_SECTOR_SIZE);
+    qdev_prop_set_uint8(dev, "width", 4);
+    qdev_prop_set_uint8(dev, "device-width", 2);
+    qdev_prop_set_bit(dev, "big-endian", false);
+    qdev_prop_set_uint16(dev, "id0", 0x89);
+    qdev_prop_set_uint16(dev, "id1", 0x18);
+    qdev_prop_set_uint16(dev, "id2", 0x00);
+    qdev_prop_set_uint16(dev, "id3", 0x00);
+    qdev_prop_set_string(dev, "name","quard-star.flash0");
+
+    object_property_add_child(OBJECT(s), "quard-star.flash0", OBJECT(dev));
+    object_property_add_alias(OBJECT(s), "pflash0",
+                              OBJECT(dev), "drive");
+
+    s->flash = PFLASH_CFI01(dev);
+    pflash_cfi01_legacy_drive(s->flash,drive_get(IF_PFLASH, 0, 0));
+
+    hwaddr flashsize = quard_star_memmap[QUARD_STAR_FLASH].size;
+    hwaddr flashbase = quard_star_memmap[QUARD_STAR_FLASH].base;
+
+    assert(QEMU_IS_ALIGNED(flashsize, QUARD_STAR_FLASH_SECTOR_SIZE));
+    assert(flashsize / QUARD_STAR_FLASH_SECTOR_SIZE <= UINT32_MAX);
+    qdev_prop_set_uint32(dev, "num-blocks", flashsize / QUARD_STAR_FLASH_SECTOR_SIZE);
+    sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), &error_fatal);
+
+    memory_region_add_subregion(system_memory, flashbase,
+                                sysbus_mmio_get_region(SYS_BUS_DEVICE(dev),
+                                                       0));
+}
+/*  创建内存 */
+static void quard_star_memory_create(MachineState *machine)
+{
+    QuardStarState *s = RISCV_VIRT_MACHINE(machine);
+    MemoryRegion *system_memory = get_system_memory();
+    //分配三片存储空间 dram sram mrom
+    MemoryRegion *dram_mem = g_new(MemoryRegion, 1);  //DRAM
+    MemoryRegion *sram_mem = g_new(MemoryRegion, 1);  //SRAM
+    MemoryRegion *mask_rom = g_new(MemoryRegion, 1);  //MROM  
+
 
     memory_region_init_ram(dram_mem, NULL, "riscv_quard_star_board.dram",
                            quard_star_memmap[QUARD_STAR_DRAM].size, &error_fatal);
@@ -137,7 +141,7 @@ static void quard_star_memory_create(MachineState *machine)
                                 quard_star_memmap[QUARD_STAR_MROM].base, mask_rom);
 
     riscv_setup_rom_reset_vec(machine, &s->soc[0], 
-                              quard_star_memmap[QUARD_STAR_MROM].base,
+                              quard_star_memmap[QUARD_STAR_FLASH].base,
                               quard_star_memmap[QUARD_STAR_MROM].base,
                               quard_star_memmap[QUARD_STAR_MROM].size,
                               0x0, 0x0);
@@ -146,10 +150,12 @@ static void quard_star_memory_create(MachineState *machine)
 
 static void quard_star_machine_init(MachineState *machine)
 {
+    //创建CPU
+    quard_star_cpu_create(machine);
    // 创建主存
-   quard_star_memory_create(machine);
+    quard_star_memory_create(machine);
    //创建flash
-   quard_star_flash_create(machine);
+    quard_star_flash_create(machine);
 }
 
 static void quard_star_machine_instance_init(Object *obj)

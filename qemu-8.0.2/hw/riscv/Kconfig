@@ -88,6 +88,4 @@ config SPIKE
 config QUARD_STAR
     bool
     select SERIAL
-    select RISCV_ACLINT
-    select SIFIVE_PLIC
     select PFLASH_CFI01

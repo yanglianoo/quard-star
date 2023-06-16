@@ -89,3 +89,6 @@ config QUARD_STAR
     bool
     select SERIAL
     select PFLASH_CFI01
+    select RISCV_ACLINT
+    select RISCV_APLIC
+    select SIFIVE_PLIC

@@ -28,6 +28,8 @@
 static const MemMapEntry quard_star_memmap[] = {
     [QUARD_STAR_MROM]  = {        0x0,        0x8000 },   
     [QUARD_STAR_SRAM]  = {     0x8000,        0x8000 },
+    [QUARD_STAR_CLINT] = { 0x02000000,       0x10000 },
+    [QUARD_STAR_PLIC]  = { 0x0c000000,     0x4000000 },
     [QUARD_STAR_UART0] = { 0x10000000,         0x100 },
     [QUARD_STAR_FLASH] = { 0x20000000,     0x2000000 },   
     [QUARD_STAR_DRAM]  = { 0x80000000,          0x80 },   
@@ -114,7 +116,7 @@ static void quard_star_flash_create(MachineState *machine)
                                 sysbus_mmio_get_region(SYS_BUS_DEVICE(dev),
                                                        0));
 }
-/*  创建内存 */
+/* 创建内存 */
 static void quard_star_memory_create(MachineState *machine)
 {
     QuardStarState *s = RISCV_VIRT_MACHINE(machine);
@@ -146,8 +148,57 @@ static void quard_star_memory_create(MachineState *machine)
                               quard_star_memmap[QUARD_STAR_MROM].size,
                               0x0, 0x0);
 }
-/* quard-star 初始化各种硬件 */
+/* 创建plic */
+static void quard_star_plic_create(MachineState *machine)
+{
+    int socket_count = riscv_socket_count(machine);
+    QuardStarState *s = RISCV_VIRT_MACHINE(machine);
+    int i,hart_count,base_hartid;
+    for ( i = 0; i < socket_count; i++) {
+    
+        hart_count = riscv_socket_hart_count(machine, i);
+        base_hartid = riscv_socket_first_hartid(machine, i);
+        char *plic_hart_config;
+        /* Per-socket PLIC hart topology configuration string */
+        plic_hart_config = riscv_plic_hart_config_string(machine->smp.cpus);
+        
+        s->plic[i] = sifive_plic_create(
+            quard_star_memmap[QUARD_STAR_PLIC].base + i *quard_star_memmap[QUARD_STAR_PLIC].size ,
+            plic_hart_config, hart_count , base_hartid,
+            QUARD_STAR_PLIC_NUM_SOURCES,
+            QUARD_STAR_PLIC_NUM_PRIORITIES,
+            QUARD_STAR_PLIC_PRIORITY_BASE,
+            QUARD_STAR_PLIC_PENDING_BASE,
+            QUARD_STAR_PLIC_ENABLE_BASE,
+            QUARD_STAR_PLIC_ENABLE_STRIDE,
+            QUARD_STAR_PLIC_CONTEXT_BASE,
+            QUARD_STAR_PLIC_CONTEXT_STRIDE,
+            quard_star_memmap[QUARD_STAR_PLIC].size);
+        g_free(plic_hart_config);
+    }
+}
+/* 创建 aclint */
+static void quard_star_aclint_create(MachineState *machine)
+{
+    int i , hart_count,base_hartid;
+    int socket_count = riscv_socket_count(machine);
+    //每个CPU都需要创建 aclint
+    for ( i = 0; i < socket_count; i++) {
 
+        base_hartid = riscv_socket_first_hartid(machine, i);
+        hart_count = riscv_socket_hart_count(machine, i);
+
+        riscv_aclint_swi_create(
+        quard_star_memmap[QUARD_STAR_CLINT].base + i *quard_star_memmap[QUARD_STAR_CLINT].size,
+        base_hartid, hart_count, false);
+        riscv_aclint_mtimer_create(quard_star_memmap[QUARD_STAR_CLINT].base +
+             + i *quard_star_memmap[QUARD_STAR_CLINT].size+ RISCV_ACLINT_SWI_SIZE,
+            RISCV_ACLINT_DEFAULT_MTIMER_SIZE, base_hartid, hart_count,
+            RISCV_ACLINT_DEFAULT_MTIMECMP, RISCV_ACLINT_DEFAULT_MTIME,
+            RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
+    }
+}
+/* quard-star 初始化各种硬件 */
 static void quard_star_machine_init(MachineState *machine)
 {
     //创建CPU
@@ -156,6 +207,10 @@ static void quard_star_machine_init(MachineState *machine)
     quard_star_memory_create(machine);
    //创建flash
     quard_star_flash_create(machine);
+    //创建PLIC
+    quard_star_plic_create(machine);
+    //创建RISCV_ACLINT
+    quard_star_aclint_create(machine);
 }
 
 static void quard_star_machine_instance_init(Object *obj)

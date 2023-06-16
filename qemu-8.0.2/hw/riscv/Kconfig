@@ -92,3 +92,4 @@ config QUARD_STAR
     select RISCV_ACLINT
     select RISCV_APLIC
     select SIFIVE_PLIC
+    select GOLDFISH_RTC

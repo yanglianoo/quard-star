@@ -37,13 +37,13 @@ static const MemMapEntry quard_star_memmap[] = {
     [QUARD_STAR_MROM]  = {        0x0,        0x8000 },   
     [QUARD_STAR_SRAM]  = {     0x8000,        0x8000 },
     [QUARD_STAR_CLINT] = { 0x02000000,       0x10000 },
-    [QUARD_STAR_PLIC]  = { 0x0c000000,     QUARD_STAR_PLIC_SIZE(QUARD_STAR_CPUS_MAX * 2) },
-    [QUARD_STAR_UART0] = { 0x10000000,         0x100 },
-    [QUARD_STAR_UART1] = { 0x10001000,         0x100 },
-    [QUARD_STAR_UART2] = { 0x10002000,         0x100 },
+    [QUARD_STAR_PLIC]  = { 0x0c000000,      0x210000 },
+    [QUARD_STAR_UART0] = { 0x10000000,         0x1000 },
+    [QUARD_STAR_UART1] = { 0x10001000,         0x1000 },
+    [QUARD_STAR_UART2] = { 0x10002000,         0x1000 },
     [QUARD_STAR_RTC]   = { 0x10003000,        0x1000 },
-    [QUARD_STAR_FLASH] = { 0x20000000,     0x2000000 },   
-    [QUARD_STAR_DRAM]  = { 0x80000000,          0x80 },   
+    [QUARD_STAR_FLASH] = { 0x20000000,    0x2000000 },   
+    [QUARD_STAR_DRAM]  = { 0x80000000,    0x40000000 },   
 };
 
 /*创建CPU */
@@ -127,6 +127,7 @@ static void quard_star_flash_create(MachineState *machine)
                                 sysbus_mmio_get_region(SYS_BUS_DEVICE(dev),
                                                        0));
 }
+
 /* 创建内存 */
 static void quard_star_memory_create(MachineState *machine)
 {
@@ -159,6 +160,7 @@ static void quard_star_memory_create(MachineState *machine)
                               quard_star_memmap[QUARD_STAR_MROM].size,
                               0x0, 0x0);
 }
+
 /* 创建plic */
 static void quard_star_plic_create(MachineState *machine)
 {
@@ -188,7 +190,10 @@ static void quard_star_plic_create(MachineState *machine)
         g_free(plic_hart_config);
     }
 }
-/* 创建 aclint */
+
+
+
+/*  创建 aclint */
 static void quard_star_aclint_create(MachineState *machine)
 {
     int i , hart_count,base_hartid;
@@ -209,7 +214,7 @@ static void quard_star_aclint_create(MachineState *machine)
             RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
     }
 }
-/* 创建3个 uart */
+ /* 创建3个 uart */
 static void quard_star_serial_create(MachineState *machine)
 {
     MemoryRegion *system_memory = get_system_memory();
@@ -224,7 +229,10 @@ static void quard_star_serial_create(MachineState *machine)
     serial_mm_init(system_memory, quard_star_memmap[QUARD_STAR_UART2].base,
         0, qdev_get_gpio_in(DEVICE(s->plic[0]), QUARD_STAR_UART2_IRQ), 399193,
         serial_hd(2), DEVICE_LITTLE_ENDIAN);
-}
+ } 
+
+
+
 /* 创建 RTC */
 static void quard_star_rtc_create(MachineState *machine)
 {    
@@ -246,9 +254,9 @@ static void quard_star_machine_init(MachineState *machine)
     quard_star_plic_create(machine);
     //创建RISCV_ACLINT
     quard_star_aclint_create(machine);
-    //创建三个uart
+    // 创建串口设备
     quard_star_serial_create(machine);
-    //创建 RTC
+    // 创建 RTC
     quard_star_rtc_create(machine);
 }
 

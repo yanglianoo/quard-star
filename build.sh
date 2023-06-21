@@ -32,9 +32,9 @@ $CROSS_PREFIX-objdump --source --demangle --disassemble --reloc --wide $SHELL_FO
 if [ ! -d "$SHELL_FOLDER/output/opensbi" ]; then  
 mkdir $SHELL_FOLDER/output/opensbi
 fi  
-cd $SHELL_FOLDER/opensbi-0.9
+cd $SHELL_FOLDER/opensbi-1.2
 make CROSS_COMPILE=$CROSS_PREFIX- PLATFORM=quard_star
-cp -r $SHELL_FOLDER/opensbi-0.9/build/platform/quard_star/firmware/*.bin $SHELL_FOLDER/output/opensbi/
+cp -r $SHELL_FOLDER/opensbi-1.2/build/platform/quard_star/firmware/*.bin $SHELL_FOLDER/output/opensbi/
 
 # 生成sbi.dtb
 cd $SHELL_FOLDER/dts

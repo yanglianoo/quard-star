@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: BSD-2-Clause
+
+config PLATFORM_QUARD_STAR
+	bool
+	select FDT
+	select FDT_DOMAIN
+	select FDT_PMU
+	default y

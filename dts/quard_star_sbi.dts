@@ -48,8 +48,8 @@
 		        possible-harts = <&cpu0 &cpu1 &cpu2 &cpu3 &cpu4 &cpu5 &cpu6>;
 		        regions = <&tmem 0x0>, <&tuart 0x0>, <&allmem 0x7>;
 				boot-hart = <&cpu0>;
-		        next-arg1 = <0x0 0x82200000>;
-		        next-addr = <0x0 0x82000000>;
+    			next-arg1 = <0x0 0x82000000>; /* 这两个地址之所以改为这个原因是因为默认的riscv64_smode_defconfig配置uboot使用了这两个地址，我们先使用默认配置跑起来uboot，后续会重新规划内存分配 */
+    			next-addr = <0x0 0x80200000>; 
 		        next-mode = <0x1>;
 		        system-reset-allowed;
 		    };

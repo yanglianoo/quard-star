@@ -59,17 +59,17 @@ _start:
 	slli	a2,	a2, 20      //a2 = 0xb0400000
 	load_data a0,a1,a2
 	
-	//load qemu_uboot.dtb
-	//[0x20100000:0x20180000] --> [0x82000000:0x82080000]
-    li		a0,	0x201
-	slli	a0,	a0, 20       //a0 = 0x20100000
-	li		a1,	0x820
-	slli	a1,	a1, 20       //a1 = 0x82000000
-    li		a2,	0x8208
-	slli	a2,	a2, 16       //a2 = 0x82080000
-	load_data a0,a1,a2
+	# //load qemu_uboot.dtb
+	# //[0x20100000:0x20180000] --> [0x82000000:0x82080000]
+    # li		a0,	0x201
+	# slli	a0,	a0, 20       //a0 = 0x20100000
+	# li		a1,	0x820
+	# slli	a1,	a1, 20       //a1 = 0x82000000
+    # li		a2,	0x8208
+	# slli	a2,	a2, 16       //a2 = 0x82080000
+	# load_data a0,a1,a2
 
-	//load u-boot.bin
+	//load os.bin
 	//[0x20800000:0x20C00000] --> [0x80200000:0x80600000]
     li		a0,	0x208
 	slli	a0,	a0, 20      //a0 = 0x20800000

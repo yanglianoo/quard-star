@@ -26,4 +26,7 @@ struct sbiret {
 	long value;
 };
 
+extern void sbi_console_putchar(int ch);
+
+
 #endif  

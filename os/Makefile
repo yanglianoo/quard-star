@@ -1,6 +1,6 @@
 
 CROSS_COMPILE = riscv64-unknown-elf-
-CFLAGS = -nostdlib -fno-builtin 
+CFLAGS = -nostdlib -fno-builtin -mcmodel=medany
 
 # riscv64-unknown-elf-gcc 工具链可以同时编译汇编和 C 代码
 CC = ${CROSS_COMPILE}gcc
@@ -13,6 +13,7 @@ SRCS_ASM = \
 SRCS_C = \
 	sbi.c \
 	main.c \
+	printf.c \
 
 # 将源文件替换为 .o 文件
 OBJS = $(SRCS_ASM:.S=.o)

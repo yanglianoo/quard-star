@@ -1,5 +1,5 @@
 SHELL_FOLDER=$(cd "$(dirname "$0")";pwd)
-DEFAULT_VC="1080x920"
+DEFAULT_VC="1080x1200"
 
 $SHELL_FOLDER/output/qemu/bin/qemu-system-riscv64 \
 -M quard-star \

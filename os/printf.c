@@ -1,5 +1,4 @@
 #include "os.h"
-#include "sbi.h"
 void uart_puts(char *s)
 {
 	while (*s) {

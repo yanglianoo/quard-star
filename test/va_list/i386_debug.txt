@@ -23,16 +23,13 @@ Disassembly of section .note.gnu.build-id:
  1d4:	47                   	inc    %edi
  1d5:	4e                   	dec    %esi
  1d6:	55                   	push   %ebp
- 1d7:	00 d9                	add    %bl,%cl
- 1d9:	6d                   	insl   (%dx),%es:(%edi)
- 1da:	0a e7                	or     %bh,%ah
- 1dc:	74 c9                	je     1a7 <_init-0xe59>
- 1de:	a5                   	movsl  %ds:(%esi),%es:(%edi)
- 1df:	0a 33                	or     (%ebx),%dh
- 1e1:	47                   	inc    %edi
- 1e2:	eb 43                	jmp    227 <_init-0xdd9>
- 1e4:	68 e9 e8 38 72       	push   $0x7238e8e9
- 1e9:	c2 8c fe             	ret    $0xfe8c
+ 1d7:	00 e9                	add    %ch,%cl
+ 1d9:	6b a8 3c 16 3d f0 eb 	imul   $0xffffffeb,-0xfc2e9c4(%eax),%ebp
+ 1e0:	a7                   	cmpsl  %es:(%edi),%ds:(%esi)
+ 1e1:	16                   	push   %ss
+ 1e2:	a3 0d a8 98 47       	mov    %eax,0x4798a80d
+ 1e7:	1b cd                	sbb    %ebp,%ecx
+ 1e9:	18 0c f2             	sbb    %cl,(%edx,%esi,8)
 
 Disassembly of section .note.gnu.property:
 
@@ -500,7 +497,7 @@ Disassembly of section .text:
     11f1:	50                   	push   %eax
     11f2:	e8 79 fe ff ff       	call   1070 <puts@plt>
     11f7:	83 c4 10             	add    $0x10,%esp
-    11fa:	83 45 f4 04          	addl   $0x4,-0xc(%ebp)
+    11fa:	83 45 f4 18          	addl   $0x18,-0xc(%ebp)
     11fe:	8b 45 f4             	mov    -0xc(%ebp),%eax
     1201:	8b 00                	mov    (%eax),%eax
     1203:	83 ec 0c             	sub    $0xc,%esp

@@ -9,5 +9,6 @@
 /* printf */
 extern int  printf(const char* s, ...);
 extern void panic(char *s);
+extern void sbi_console_putchar(int ch);
 
 #endif /* __OS_H__ */

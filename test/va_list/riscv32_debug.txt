@@ -96,7 +96,7 @@ Disassembly of section .text:
    1016a:	853e                	mv	a0,a5
    1016c:	2405                	jal	1038c <puts>
    1016e:	fec42783          	lw	a5,-20(s0)
-   10172:	0791                	add	a5,a5,4
+   10172:	07e1                	add	a5,a5,24
    10174:	fef42623          	sw	a5,-20(s0)
    10178:	fec42783          	lw	a5,-20(s0)
    1017c:	439c                	lw	a5,0(a5)

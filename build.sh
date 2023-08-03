@@ -76,6 +76,9 @@ make
 cp $SHELL_FOLDER/os/os.bin $SHELL_FOLDER/output/os/os.bin
 make clean
 
+
+
+
 # 合成firmware固件
 if [ ! -d "$SHELL_FOLDER/output/fw" ]; then  
 mkdir $SHELL_FOLDER/output/fw
@@ -98,6 +101,5 @@ dd of=fw.bin bs=1k conv=notrunc seek=4K if=$SHELL_FOLDER/output/trusted_domain/t
 #dd of=fw.bin bs=1k conv=notrunc seek=8K if=$SHELL_FOLDER/output/uboot/u-boot.bin
 # 写入 os.bin,地址偏移量为 1K*8K =  0x800000
 dd of=fw.bin bs=1k conv=notrunc seek=8K if=$SHELL_FOLDER/output/os/os.bin
-
 
 

@@ -1,5 +1,3 @@
-
-
 gcc -O0 -m32   va_list.c -o i386.out
 riscv64-unknown-elf-gcc -O0 va_list.c -o riscv64.out
 riscv32-unknown-elf-gcc -O0   va_list.c -o riscv32.out

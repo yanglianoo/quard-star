@@ -79,6 +79,7 @@ _start:
 	slli	a2,	a2, 20      //a2 = 0x80600000
 	load_data a0,a1,a2
 
+
     csrr    a0, mhartid
     li		t0,	0x0     
 	beq		a0, t0, _no_wait

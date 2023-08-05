@@ -14,8 +14,10 @@ LOAD main.o
 LOAD printf.o
 LOAD batch.o
 LOAD trap.o
+LOAD syscall.o
+LOAD string.o
 
-.text           0x0000000080200000      0xa26
+.text           0x0000000080200000      0xa1c
  *(.text .text.*)
  .text          0x0000000080200000        0x0 entry.o
  .text.entry    0x0000000080200000        0xc entry.o
@@ -27,33 +29,38 @@ LOAD trap.o
  .text          0x00000000802000d6       0xb2 sbi.o
                 0x00000000802000d6                sbi_ecall
                 0x000000008020015a                sbi_console_putchar
- .text          0x0000000080200188       0x1a main.o
+ .text          0x0000000080200188       0x22 main.o
                 0x0000000080200188                os_main
- .text          0x00000000802001a2      0x572 printf.o
-                0x00000000802001a2                uart_puts
-                0x000000008020068e                printf
-                0x00000000802006e6                panic
- .text          0x0000000080200714      0x208 batch.o
-                0x0000000080200762                syscall
-                0x00000000802007a6                testsys
-                0x00000000802007ca                app_init_context
- .text          0x000000008020091c      0x10a trap.o
-                0x0000000080200950                trap_handler
-                0x0000000080200a06                trap_init
+ .text          0x00000000802001aa      0x572 printf.o
+                0x00000000802001aa                uart_puts
+                0x0000000080200696                printf
+                0x00000000802006ee                panic
+ .text          0x000000008020071c      0x16c batch.o
+                0x0000000080200750                syscall
+                0x0000000080200794                testsys
+                0x00000000802007d4                app_init_context
+ .text          0x0000000080200888       0xcc trap.o
+                0x00000000802008bc                trap_handler
+                0x0000000080200934                trap_init
+ .text          0x0000000080200954       0x8c syscall.o
+                0x0000000080200954                __SYSCALL
+                0x00000000802009a2                __sys_write
+ .text          0x00000000802009e0       0x3c string.o
+                0x00000000802009e0                strlen
 
-.rodata         0x0000000080200a28      0x197
+.rodata         0x0000000080200a20       0xfd
  *(.rodata .rodata.*)
- .rodata        0x0000000080200a28       0x11 main.o
- *fill*         0x0000000080200a39        0x7 
- .rodata        0x0000000080200a40       0x8a printf.o
- *fill*         0x0000000080200aca        0x6 
- .rodata        0x0000000080200ad0       0x92 batch.o
- *fill*         0x0000000080200b62        0x6 
- .rodata        0x0000000080200b68       0x57 trap.o
+ .rodata        0x0000000080200a20       0x11 main.o
+ *fill*         0x0000000080200a31        0x7 
+ .rodata        0x0000000080200a38       0x8a printf.o
+ *fill*         0x0000000080200ac2        0x6 
+ .rodata        0x0000000080200ac8       0x10 batch.o
+ .rodata        0x0000000080200ad8       0x10 trap.o
+ .rodata        0x0000000080200ae8       0x35 syscall.o
 
-.data           0x0000000080200bbf      0x441
+.data           0x0000000080200b1d      0x4e3
                 0x0000000080201000                . = ALIGN (0x1000)
- *fill*         0x0000000080200bbf      0x441 
+ *fill*         0x0000000080200b1d      0x4e3 
  *(.sdata .sdata.*)
  *(.data .data.*)
  .data          0x0000000080201000        0x0 entry.o
@@ -63,6 +70,8 @@ LOAD trap.o
  .data          0x0000000080201000        0x0 printf.o
  .data          0x0000000080201000        0x0 batch.o
  .data          0x0000000080201000        0x0 trap.o
+ .data          0x0000000080201000        0x0 syscall.o
+ .data          0x0000000080201000        0x0 string.o
                 [!provide]                        PROVIDE (_data_end = .)
 
 .bss            0x0000000080201000    0x144f8
@@ -81,6 +90,8 @@ LOAD trap.o
                 0x00000000802133e8                UserStack
                 0x00000000802153e8                tasks
  .bss           0x00000000802154f8        0x0 trap.o
+ .bss           0x00000000802154f8        0x0 syscall.o
+ .bss           0x00000000802154f8        0x0 string.o
  *(COMMON)
 OUTPUT(os.elf elf64-littleriscv)
 
@@ -100,6 +111,10 @@ OUTPUT(os.elf elf64-littleriscv)
                 0x0000000000000136       0x42 batch.o
  .riscv.attributes
                 0x0000000000000178       0x42 trap.o
+ .riscv.attributes
+                0x00000000000001ba       0x3e syscall.o
+ .riscv.attributes
+                0x00000000000001f8       0x3e string.o
 
 .comment        0x0000000000000000       0x1b
  .comment       0x0000000000000000       0x1b sbi.o
@@ -108,3 +123,5 @@ OUTPUT(os.elf elf64-littleriscv)
  .comment       0x000000000000001b       0x1c printf.o
  .comment       0x000000000000001b       0x1c batch.o
  .comment       0x000000000000001b       0x1c trap.o
+ .comment       0x000000000000001b       0x1c syscall.o
+ .comment       0x000000000000001b       0x1c string.o

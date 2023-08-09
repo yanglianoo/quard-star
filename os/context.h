@@ -4,7 +4,7 @@
 #include "os.h"
 
 /*S模式的trap上下文*/
-typedef struct pt_regs {
+typedef struct TrapContext {
 	reg_t x0;
 	reg_t ra;
 	reg_t sp;
@@ -40,7 +40,27 @@ typedef struct pt_regs {
 	/* S模式下的寄存器 */
 	reg_t sstatus;
 	reg_t sepc;
-}pt_regs;
+}TrapContext;
+
+/* S模式的任务上下文 */
+typedef struct TaskContext
+{
+	reg_t ra;
+	reg_t sp;
+	reg_t s0;
+	reg_t s1;
+	reg_t s2;
+	reg_t s3;
+	reg_t s4;
+	reg_t s5;
+	reg_t s6;
+	reg_t s7;
+	reg_t s8;
+	reg_t s9;
+	reg_t s10;
+	reg_t s11;
+}TaskContext;
+
 
 
 #endif

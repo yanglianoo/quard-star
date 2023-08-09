@@ -12,3 +12,15 @@ size_t strlen(const char *str)
     }
     return ptr - str;
 }
+
+
+// 从存储区 src 复制 n 个字节到存储区 dest。
+void* memcpy(void *dest, const void *src, size_t count)
+{
+    char *ptr = dest;
+    while (count--)
+    {
+        *ptr++ = *((char *)(src++));
+    }
+    return dest;
+}

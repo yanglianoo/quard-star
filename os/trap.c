@@ -4,22 +4,22 @@
 
 
 
-pt_regs* trap_handler(pt_regs* cx)
+TrapContext* trap_handler(TrapContext* cx)
 {
-    reg_t scause = r_scause() ;
+    reg_t scause = r_scause();
 	switch (scause)
 	{
 	case 8:
 			__SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
 		break;
-	
 	default:
-			panic("unknown scause\n");
+			printf("undfined scause:%d\n",scause);
+			//panic("error!");
 		break;
 	}
-
+	
 	cx->sepc += 8;
-	__restore(cx);
+
 	return cx;
 }
 

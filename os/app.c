@@ -1,4 +1,5 @@
 #include "os.h"
+#include "string.h"
 size_t syscall(size_t id, reg_t arg1, reg_t arg2, reg_t arg3) {
     long ret;
     asm volatile (
@@ -25,28 +26,11 @@ size_t sys_yield()
     syscall(__NR_sched_yield,0,0,0);
 }
 
-void testsys_write() {
-    
-    const char *message = "fuck you,RISC-V!\n";
-    int len = strlen(message);
-    int ret = sys_wirte(1,message, len);
-
-    sys_yield();
-    while (1)
-    {
-        /* code */
-    }
-}
-
-
-/*
- * a very rough implementaion, just to consume the cpu
- */
-void task_delay(volatile int count)
+uint64_t sys_gettime()
 {
-	count *= 50000;
-	while (count--);
+    return syscall(__NR_gettimeofday,0,0,0);
 }
+
 
 
 void task1()
@@ -56,8 +40,6 @@ void task1()
     while (1)
     {
         sys_wirte(1,message, len);
-        task_delay(10000);
-        sys_yield();
     }
 }
 
@@ -69,23 +51,19 @@ void task2()
     while (1)
     {
         sys_wirte(1,message, len);
-        task_delay(10000);
-        sys_yield();
+        
     }
-    
-
-
 }
 
 void task3()
 {
     const char *message = "task3 is running!\n";
-
     int len = strlen(message);
-    while (1)
+    uint64_t current_timer = sys_gettime();
+    uint64_t wait_for = current_timer + 30000;
+    while (sys_gettime() < wait_for)
     {
         sys_wirte(1,message, len);
-        task_delay(10000);
         sys_yield();
     }
     
@@ -95,6 +73,6 @@ void task3()
 void task_init(void)
 {
 	task_create(task1);
-	// task_create(task2);
-    // task_create(task3);
+	task_create(task2);
+    task_create(task3);
 }

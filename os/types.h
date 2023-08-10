@@ -7,6 +7,8 @@ typedef unsigned short uint16_t;
 typedef unsigned int  uint32_t;
 typedef unsigned long long uint64_t;
 
+
+typedef unsigned long int uintptr_t;
 /*
  * RISCV64: 寄存器的大小是64位的
  */ 

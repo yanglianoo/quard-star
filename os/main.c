@@ -9,5 +9,7 @@ void os_main()
 
    task_init();
 
+   timer_init();
+   
    run_first_task();
 }

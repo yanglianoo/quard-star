@@ -1,4 +1,4 @@
-#include "os.h"
+#include <timeros/os.h>
 #define CLOCK_FREQ 10000000 
 #define TICKS_PER_SEC 500
 

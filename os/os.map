@@ -19,8 +19,13 @@ LOAD string.o
 LOAD app.o
 LOAD task.o
 LOAD timer.o
+LOAD stack.o
+LOAD address.o
+                0x0000000080200000                BASE_ADDRESS = 0x80200000
+                0x0000000080200000                . = BASE_ADDRESS
+                0x0000000080200000                skernel = .
 
-.text           0x0000000080200000     0x1016
+.text           0x0000000080200000     0x15dc
  *(.text .text.*)
  .text          0x0000000080200000        0x0 entry.o
  .text.entry    0x0000000080200000        0xc entry.o
@@ -35,59 +40,90 @@ LOAD timer.o
                 0x0000000080200138                sbi_ecall
                 0x00000000802001bc                sbi_console_putchar
                 0x00000000802001ea                sbi_set_timer
- .text          0x000000008020021c       0x2e main.o
+ .text          0x000000008020021c       0x1a main.o
                 0x000000008020021c                os_main
- .text          0x000000008020024a      0x572 printf.o
-                0x000000008020024a                uart_puts
-                0x0000000080200736                printf
-                0x000000008020078e                panic
- .text          0x00000000802007bc      0x10c trap.o
-                0x00000000802007f0                trap_handler
-                0x00000000802008a8                trap_init
- .text          0x00000000802008c8       0xf4 syscall.o
-                0x00000000802008c8                __sys_write
-                0x0000000080200906                __sys_yield
-                0x000000008020091c                __sys_gettime
-                0x0000000080200934                __SYSCALL
- .text          0x00000000802009bc       0x92 string.o
-                0x00000000802009bc                strlen
-                0x00000000802009f8                memcpy
- .text          0x0000000080200a4e      0x190 app.o
-                0x0000000080200a4e                syscall
-                0x0000000080200a92                sys_wirte
-                0x0000000080200ac8                sys_yield
-                0x0000000080200aea                sys_gettime
-                0x0000000080200b0c                task1
-                0x0000000080200b40                task2
-                0x0000000080200b74                task3
-                0x0000000080200ba8                task_init
- .text          0x0000000080200bde      0x318 task.o
-                0x0000000080200c12                tcx_init
-                0x0000000080200c8a                task_create
-                0x0000000080200dae                schedule
-                0x0000000080200eb2                run_first_task
- .text          0x0000000080200ef6      0x120 timer.o
-                0x0000000080200f78                set_next_trigger
-                0x0000000080200f9e                timer_init
-                0x0000000080200fec                get_time_us
+ .text          0x0000000080200236      0x572 printf.o
+                0x0000000080200236                uart_puts
+                0x0000000080200722                printf
+                0x000000008020077a                panic
+ .text          0x00000000802007a8      0x10c trap.o
+                0x00000000802007dc                trap_handler
+                0x0000000080200894                trap_init
+ .text          0x00000000802008b4       0xf4 syscall.o
+                0x00000000802008b4                __sys_write
+                0x00000000802008f2                __sys_yield
+                0x0000000080200908                __sys_gettime
+                0x0000000080200920                __SYSCALL
+ .text          0x00000000802009a8       0x92 string.o
+                0x00000000802009a8                strlen
+                0x00000000802009e4                memcpy
+ .text          0x0000000080200a3a      0x190 app.o
+                0x0000000080200a3a                syscall
+                0x0000000080200a7e                sys_wirte
+                0x0000000080200ab4                sys_yield
+                0x0000000080200ad6                sys_gettime
+                0x0000000080200af8                task1
+                0x0000000080200b2c                task2
+                0x0000000080200b60                task3
+                0x0000000080200b94                task_init
+ .text          0x0000000080200bca      0x318 task.o
+                0x0000000080200bfe                tcx_init
+                0x0000000080200c76                task_create
+                0x0000000080200d9a                schedule
+                0x0000000080200e9e                run_first_task
+ .text          0x0000000080200ee2      0x120 timer.o
+                0x0000000080200f64                set_next_trigger
+                0x0000000080200f8a                timer_init
+                0x0000000080200fd8                get_time_us
+ .text          0x0000000080201002      0x17c stack.o
+                0x0000000080201002                initStack
+                0x0000000080201020                isEmpty
+                0x0000000080201048                isFull
+                0x0000000080201076                push
+                0x00000000802010de                pop
+                0x0000000080201136                top
+ .text          0x000000008020117e      0x45e address.o
+                0x000000008020117e                phys_addr_from_size_t
+                0x00000000802011a2                phys_page_num_from_size_t
+                0x00000000802011c6                size_t_from_phys_addr
+                0x00000000802011dc                size_t_from_phys_page_num
+                0x00000000802011f2                virt_addr_from_size_t
+                0x0000000080201216                virt_page_num_from_size_t
+                0x000000008020123c                size_t_from_virt_addr
+                0x000000008020126a                size_t_from_virt_page_num
+                0x0000000080201280                PageTableEntry_new
+                0x00000000802012ae                PageTableEntry_empty
+                0x00000000802012c4                PageTableEntry_ppn
+                0x00000000802012ee                PageTableEntry_flags
+                0x000000008020130a                PageTableEntry_is_valid
+                0x0000000080201340                floor_phys
+                0x0000000080201360                ceil_phys
+                0x0000000080201386                StackFrameAllocator_new
+                0x00000000802013b8                StackFrameAllocator_init
+                0x00000000802013e6                StackFrameAllocator_alloc
+                0x0000000080201466                StackFrameAllocator_dealloc
+                0x00000000802014f6                frame_allocator_test
 
-.rodata         0x0000000080201018      0x1bf
+.rodata         0x00000000802015e0      0x275
  *(.rodata .rodata.*)
- .rodata        0x0000000080201018       0x11 main.o
- *fill*         0x0000000080201029        0x7 
- .rodata        0x0000000080201030       0x8a printf.o
- *fill*         0x00000000802010ba        0x6 
- .rodata        0x00000000802010c0       0x3e trap.o
- *fill*         0x00000000802010fe        0x2 
- .rodata        0x0000000080201100       0x3b syscall.o
- *fill*         0x000000008020113b        0x5 
- .rodata        0x0000000080201140       0x43 app.o
- *fill*         0x0000000080201183        0x5 
- .rodata        0x0000000080201188       0x4f task.o
+ .rodata        0x00000000802015e0       0x11 main.o
+ *fill*         0x00000000802015f1        0x7 
+ .rodata        0x00000000802015f8       0x8a printf.o
+ *fill*         0x0000000080201682        0x6 
+ .rodata        0x0000000080201688       0x3e trap.o
+ *fill*         0x00000000802016c6        0x2 
+ .rodata        0x00000000802016c8       0x3b syscall.o
+ *fill*         0x0000000080201703        0x5 
+ .rodata        0x0000000080201708       0x43 app.o
+ *fill*         0x000000008020174b        0x5 
+ .rodata        0x0000000080201750       0x4f task.o
+ *fill*         0x000000008020179f        0x1 
+ .rodata        0x00000000802017a0       0x38 stack.o
+ .rodata        0x00000000802017d8       0x7d address.o
 
-.data           0x00000000802011d7      0xe29
+.data           0x0000000080201855      0x7ab
                 0x0000000080202000                . = ALIGN (0x1000)
- *fill*         0x00000000802011d7      0xe29 
+ *fill*         0x0000000080201855      0x7ab 
  *(.sdata .sdata.*)
  *(.data .data.*)
  .data          0x0000000080202000        0x0 entry.o
@@ -102,9 +138,11 @@ LOAD timer.o
  .data          0x0000000080202000        0x0 app.o
  .data          0x0000000080202000        0x0 task.o
  .data          0x0000000080202000        0x0 timer.o
+ .data          0x0000000080202000        0x0 stack.o
+ .data          0x0000000080202000        0x0 address.o
                 [!provide]                        PROVIDE (_data_end = .)
 
-.bss            0x0000000080202000    0x388a0
+.bss            0x0000000080202000    0x4c138
  *(.sbss .sbss.*)
  *(.bss .bss.*)
  .bss           0x0000000080202000        0x0 entry.o
@@ -125,6 +163,8 @@ LOAD timer.o
                 0x00000000802263e8                UserStack
                 0x000000008023a3e8                tasks
  .bss           0x000000008023a8a0        0x0 timer.o
+ .bss           0x000000008023a8a0        0x0 stack.o
+ .bss           0x000000008023a8a0    0x13898 address.o
  *(COMMON)
 OUTPUT(os.elf elf64-littleriscv)
 
@@ -154,6 +194,10 @@ OUTPUT(os.elf elf64-littleriscv)
                 0x000000000000026e       0x42 task.o
  .riscv.attributes
                 0x00000000000002b0       0x42 timer.o
+ .riscv.attributes
+                0x00000000000002f2       0x3e stack.o
+ .riscv.attributes
+                0x0000000000000330       0x3e address.o
 
 .comment        0x0000000000000000       0x1b
  .comment       0x0000000000000000       0x1b sbi.o
@@ -166,3 +210,5 @@ OUTPUT(os.elf elf64-littleriscv)
  .comment       0x000000000000001b       0x1c app.o
  .comment       0x000000000000001b       0x1c task.o
  .comment       0x000000000000001b       0x1c timer.o
+ .comment       0x000000000000001b       0x1c stack.o
+ .comment       0x000000000000001b       0x1c address.o

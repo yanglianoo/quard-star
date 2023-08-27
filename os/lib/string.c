@@ -1,6 +1,4 @@
-#include "os.h"
-
-
+#include <timeros/os.h>
 
 //计算字符串的长度 
 size_t strlen(const char *str)
@@ -12,7 +10,6 @@ size_t strlen(const char *str)
     }
     return ptr - str;
 }
-
 
 // 从存储区 src 复制 n 个字节到存储区 dest。
 void* memcpy(void *dest, const void *src, size_t count)

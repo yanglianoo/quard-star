@@ -1,4 +1,4 @@
-#include "os.h"
+#include <timeros/os.h>
 #define USER_STACK_SIZE (4096 * 2)
 #define KERNEL_STACK_SIZE (4096 * 2)
 

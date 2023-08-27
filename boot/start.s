@@ -75,8 +75,8 @@ _start:
 	slli	a0,	a0, 20      //a0 = 0x20800000
     li		a1,	0x802
 	slli	a1,	a1, 20      //a1 = 0x80200000
-    li		a2,	0x806
-	slli	a2,	a2, 20      //a2 = 0x80600000
+    li		a2,	0x808
+	slli	a2,	a2, 20      //a2 = 0x80800000
 	load_data a0,a1,a2
 
 

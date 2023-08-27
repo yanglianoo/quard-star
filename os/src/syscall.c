@@ -1,4 +1,4 @@
-#include "os.h"
+#include <timeros/os.h>
 
 void __sys_write(size_t fd, const char* data, size_t len)
 {

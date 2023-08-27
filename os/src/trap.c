@@ -1,7 +1,4 @@
-#include "os.h"
-#include "context.h"
-#include "riscv.h"
-
+#include <timeros/os.h>
 
 
 TrapContext* trap_handler(TrapContext* cx)

@@ -1,5 +1,4 @@
 #include <timeros/os.h>
-#include "string.h"
 uint64_t syscall(size_t id, reg_t arg1, reg_t arg2, reg_t arg3) {
     uint64_t ret;
     asm volatile (

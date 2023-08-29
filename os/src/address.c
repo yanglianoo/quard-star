@@ -1,15 +1,20 @@
 #include <timeros/os.h>
 #include <timeros/stack.h>
+#include <timeros/string.h>
+#include <timeros/assert.h>
+
 #define PAGE_SIZE 0x1000      // 4kb  一页的大小
 #define PAGE_SIZE_BITS   0xc  // 12   页内偏移地址长度
 
 #define PA_WIDTH_SV39 56      //物理地址长度
 #define VA_WIDTH_SV39 39      //虚拟地址长度
-#define PPN_WIDTH_SV39 (PA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 虚拟页号 44位 [55:12]
-#define VPN_WIDTH_SV39 (VA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 物理页号 27位 [38:12]
+#define PPN_WIDTH_SV39 (PA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 物理页号 44位 [55:12]
+#define VPN_WIDTH_SV39 (VA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 虚拟页号 27位 [38:12]
 
 #define MEMORY_END 0x80800000    // 0x80200000 ~ 0x80800000
-#define MEMORY_START 0x80200000
+#define MEMORY_START 0x80400000  
+
+
 typedef struct {
     uint64_t value; 
 } PhysAddr;
@@ -46,6 +51,13 @@ uint64_t size_t_from_phys_addr(PhysAddr v) {
 uint64_t size_t_from_phys_page_num(PhysPageNum v) {
     return v.value;
 }
+/* 从物理页号转换为实际物理地址 */
+PhysAddr phys_addr_from_phys_page_num(PhysPageNum ppn)
+{
+    PhysAddr addr;
+    addr.value = ppn.value << PAGE_SIZE_BITS ;
+    return addr;
+}
 
 VirtAddr virt_addr_from_size_t(uint64_t v) {
     VirtAddr addr;
@@ -70,6 +82,30 @@ uint64_t size_t_from_virt_addr(VirtAddr v) {
 uint64_t size_t_from_virt_page_num(VirtPageNum v) {
     return v.value;
 }
+
+/* 物理地址向下取整 */
+PhysPageNum floor_phys(PhysAddr phys_addr) {
+    PhysPageNum phys_page_num;
+    phys_page_num.value = phys_addr.value / PAGE_SIZE;
+    return phys_page_num;
+}
+
+/* 物理地址向上取整 */
+PhysPageNum ceil_phys(PhysAddr phys_addr) {
+    PhysPageNum phys_page_num;
+    phys_page_num.value = (phys_addr.value + PAGE_SIZE - 1) / PAGE_SIZE;
+    return phys_page_num;
+}
+
+/* 把虚拟地址转换为虚拟页号 */
+VirtPageNum virt_page_num_from_virt_addr(VirtAddr virt_addr)
+{
+    VirtPageNum vpn;
+    vpn.value =  virt_addr.value / PAGE_SIZE;
+    return vpn;
+}
+
+
 
 // 定义位掩码常量
 #define PTE_V (1 << 0)   //有效位
@@ -117,19 +153,26 @@ bool PageTableEntry_is_valid(PageTableEntry *entry) {
     return (entryFlags & PTE_V) != 0;
 }
 
-/* 向下取整 */
-PhysPageNum floor_phys(PhysAddr phys_addr) {
-    PhysPageNum phys_page_num;
-    phys_page_num.value = phys_addr.value / PAGE_SIZE;
-    return phys_page_num;
+uint8_t* get_bytes_array(PhysPageNum ppn)
+{
+    // 先从物理页号转换为物理地址
+    PhysAddr addr = phys_addr_from_phys_page_num(ppn);
+    return (uint8_t*) addr.value;
 }
 
-/* 向上取整 */
-PhysPageNum ceil_phys(PhysAddr phys_addr) {
-    PhysPageNum phys_page_num;
-    phys_page_num.value = (phys_addr.value + PAGE_SIZE - 1) / PAGE_SIZE;
-    return phys_page_num;
+PageTableEntry* get_pte_array(PhysPageNum ppn)
+{
+    // 先从物理页号转换为物理地址
+    PhysAddr addr = phys_addr_from_phys_page_num(ppn);
+    return (PageTableEntry*) addr.value;
 }
+
+void* get_mut(PhysPageNum ppn) {
+
+    PhysAddr addr = phys_addr_from_phys_page_num(ppn);
+    return (void*)addr.value; // Assuming addr is a valid memory address
+}
+
 
 typedef struct 
 {
@@ -152,8 +195,7 @@ void StackFrameAllocator_init(StackFrameAllocator *allocator, PhysPageNum l, Phy
 
 PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator) {
     PhysPageNum ppn;
-    printf("allocator->recycled.top:%d\n",allocator->recycled.top);
-    if (allocator->recycled.top >= 1) {
+    if (allocator->recycled.top >= 0) {
         ppn.value = pop(&(allocator->recycled));
     } else {
         if (allocator->current == allocator->end) {
@@ -162,37 +204,40 @@ PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator) {
             ppn.value = allocator->current++;
         }
     }
+    /* 清空此页内存 ： 注意不能覆盖内核代码区，分配的内存只能是未使用部分*/
+    PhysAddr addr = phys_addr_from_phys_page_num(ppn);
+    memset(addr.value,0,PAGE_SIZE);
+    // uint8_t* ptr = get_bytes_array(ppn);
+    // for (size_t i = 0; i < PAGE_SIZE; i++)
+    // {
+        
+    //     printf("%d",ptr[i]);
+    //    // ptr++;
+    // }
     return ppn;
 }
 
 void StackFrameAllocator_dealloc(StackFrameAllocator *allocator, PhysPageNum ppn) {
     uint64_t ppnValue = ppn.value;
-
     // 检查回收的页面之前一定被分配出去过
     if (ppnValue >= allocator->current) {
         printf("Frame ppn=%lx has not been allocated!\n", ppnValue);
         return;
     }
-    //未在回收列表中
-    for (size_t i = 0; i < allocator->recycled.top; i++)
+    // 检查未在回收列表中
+    if(allocator->recycled.top>=0)
     {
-        if(ppnValue ==allocator->recycled.data[i] )
-        return;
+        for (size_t i = 0; i <= allocator->recycled.top; i++)
+        {
+            if(ppnValue ==allocator->recycled.data[i] )
+            return;
+        }
     }
-    // recycle
+    // 回收物理内存页号
     push(&(allocator->recycled), ppnValue);
 }
 
 
-
-// typedef struct {
-//     PhysPageNum root_ppn;
-// }PageTable;
-
-// void PageTable_new(PageTable* pte)
-// {
-    
-// }
 
 static StackFrameAllocator FrameAllocatorImpl;
 
@@ -204,12 +249,119 @@ void frame_allocator_test()
             ceil_phys(phys_addr_from_size_t(MEMORY_END)));
     printf("Memoery start:%d\n",floor_phys(phys_addr_from_size_t(MEMORY_START)));
     printf("Memoery end:%d\n",ceil_phys(phys_addr_from_size_t(MEMORY_END)));
+    PhysPageNum frame[10];
     for (size_t i = 0; i < 5; i++)
     {
-        PhysPageNum frame = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-        printf("frame id:%d\n",frame.value);
+         frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
+         printf("frame id:%d\n",frame[i].value);
+    }
+    // for (size_t i = 0; i < 5; i++)
+    // {
+    //     StackFrameAllocator_dealloc(&FrameAllocatorImpl,frame[i]);
+    //     printf("allocator->recycled.data.value:%d\n",FrameAllocatorImpl.recycled.data[i]);
+    //     printf("frame id:%d\n",frame[i].value);
+    // }
+    // PhysPageNum frame_test[10];
+    // for (size_t i = 0; i < 5; i++)
+    // {
+    //      frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
+    //     printf("frame id:%d\n",frame[i].value);
+    // }
+}
+
+
+
+
+
+/* 拿到虚拟页号的三级索引，按照从高到低的顺序返回 */
+void indexes(VirtPageNum vpn, size_t* result) 
+{
+    size_t idx[3];
+    for (int i = 2; i >= 0; i--) {
+        idx[i] = vpn.value & 0x1ff;   // 1_1111_1111 = 0x1ff
+        vpn.value >>= 9;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        result[i] = idx[i];
+    }
+}
+
+
+
+typedef struct {
+    PhysPageNum root_ppn; //根节点
+    Stack frames;         //页帧
+}PageTable;
+
+PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
+{
+    
+    // 拿到虚拟页号的三级索引，保存到idx数组中
+    size_t* idx;
+    indexes(vpn, idx); 
+    //根节点
+    PhysPageNum ppn = pt->root_ppn;
+    //从根节点开始遍历，如果没有pte，就分配一页内存，然后创建一个
+    for (int i = 0; i < 3; i++) 
+    {
+        //拿到具体的页表项
+        PageTableEntry* pte =  &get_pte_array(ppn)[idx[i]];
+            if (i == 2) {
+                return pte;
+            }
+        //如果此项页表为空
+            if (!PageTableEntry_is_valid(pte)) {
+                //分配一页物理内存
+                PhysPageNum frame =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
+               //新建一个页表项
+               *pte =  PageTableEntry_new(frame,PTE_V);
+               //压入栈中
+                push(&pt->frames,frame.value);
+            }
+        //取出进入下级页表的物理页号
+        ppn = PageTableEntry_ppn(pte);
+    }
+
+}
+
+PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
+{
+    // 拿到虚拟页号的三级索引，保存到idx数组中
+    size_t* idx;
+    indexes(vpn, idx); 
+    //根节点
+    PhysPageNum ppn = pt->root_ppn;
+    //从根节点开始遍历，如果没有pte，就分配一页内存，然后创建一个
+    for (int i = 0; i < 3; i++) 
+    {
+        //拿到具体的页表项
+        PageTableEntry* pte =  &get_pte_array(ppn)[idx[i]];
+            if (i == 2) {
+                return pte;
+            }
+        //如果此项页表为空
+            if (!PageTableEntry_is_valid(pte)) {
+                return NULL;
+            }
+        //取出进入下级页表的物理页号
+        ppn = PageTableEntry_ppn(pte);
     }
     
+}
+
+void PageTable_map(PageTable* pt,VirtPageNum vpn, PhysPageNum ppn, uint8_t pteflgs)
+{
+    PageTableEntry* pte = find_pte_create(pt,vpn);
+    assert(!PageTableEntry_is_valid(pte));
+    *pte = PageTableEntry_new(ppn,PTE_V | pteflgs);
+}
+
+void PageTable_unmap(PageTable* pt, VirtPageNum vpn)
+{
+    PageTableEntry* pte = find_pte(pt,vpn);
+    assert(!PageTableEntry_is_valid(pte));
+    *pte = PageTableEntry_empty();
 }
 
 

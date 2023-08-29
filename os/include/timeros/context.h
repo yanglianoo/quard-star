@@ -1,5 +1,5 @@
-#ifndef __CONTEXT_H__
-#define __CONTEXT_H__
+#ifndef TOS_CONTEXT_H__
+#define TOS_CONTEXT_H__
 
 #include "os.h"
 

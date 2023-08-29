@@ -1,5 +1,5 @@
-#ifndef __STACK_H__
-#define __STACK_H__
+#ifndef TOS_STACK_H__
+#define TOS_STACK_H__
 
 #include "os.h"
 
@@ -7,7 +7,7 @@
 
 typedef struct {
     u64 data[MAX_SIZE];
-    u64 top;
+    int top;    // 不能定义成无符号类型，不然会导致 -1 > 0
 } Stack;
 
 bool isEmpty(Stack *stack);

@@ -1,5 +1,5 @@
-#ifndef __OS_H__
-#define __OS_H__
+#ifndef TOS_OS_H__
+#define TOS_OS_H__
 
 #include <stddef.h>
 #include <stdarg.h>

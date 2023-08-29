@@ -3,7 +3,7 @@
 
 // 初始化栈
 void initStack(Stack *stack) {
-    stack->top = 0;
+    stack->top = -1;
 }
 
 // 判断栈是否为空

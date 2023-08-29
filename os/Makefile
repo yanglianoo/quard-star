@@ -24,6 +24,7 @@ SRCS_C = \
 	timer.c \
 	stack.c \
 	address.c \
+	assert.c \
 
 INCLUDE:=-I./include
 SRC:=./src

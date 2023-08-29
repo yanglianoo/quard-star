@@ -1,5 +1,5 @@
-#ifndef __SBI_H__
-#define __SBI_H__
+#ifndef TOS_SBI_H__
+#define TOS_SBI_H__
 
 enum sbi_ext_id {
 	SBI_EXT_0_1_SET_TIMER = 0x0,

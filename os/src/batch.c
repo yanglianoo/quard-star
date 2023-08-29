@@ -1,13 +1,13 @@
-#include <stddef.h>
-#include "os.h"
-#include "context.h"
-#define USER_STACK_SIZE (4096 * 2)
-#define KERNEL_STACK_SIZE (4096 * 2)
+// #include <stddef.h>
+// #include "os.h"
+// #include "context.h"
+// #define USER_STACK_SIZE (4096 * 2)
+// #define KERNEL_STACK_SIZE (4096 * 2)
 
 
 
-uint8_t KernelStack[KERNEL_STACK_SIZE];
-uint8_t UserStack[USER_STACK_SIZE];
+// uint8_t KernelStack[KERNEL_STACK_SIZE];
+// uint8_t UserStack[USER_STACK_SIZE];
 
 
 

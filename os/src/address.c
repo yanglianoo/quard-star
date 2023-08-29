@@ -1,35 +1,5 @@
-#include <timeros/os.h>
-#include <timeros/stack.h>
-#include <timeros/string.h>
-#include <timeros/assert.h>
+#include <timeros/address.h>
 
-#define PAGE_SIZE 0x1000      // 4kb  一页的大小
-#define PAGE_SIZE_BITS   0xc  // 12   页内偏移地址长度
-
-#define PA_WIDTH_SV39 56      //物理地址长度
-#define VA_WIDTH_SV39 39      //虚拟地址长度
-#define PPN_WIDTH_SV39 (PA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 物理页号 44位 [55:12]
-#define VPN_WIDTH_SV39 (VA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 虚拟页号 27位 [38:12]
-
-#define MEMORY_END 0x80800000    // 0x80200000 ~ 0x80800000
-#define MEMORY_START 0x80400000  
-
-
-typedef struct {
-    uint64_t value; 
-} PhysAddr;
-
-typedef struct {
-    uint64_t value;
-} VirtAddr;
-
-typedef struct {
-    uint64_t value;
-} PhysPageNum;
-
-typedef struct {
-    uint64_t value;
-} VirtPageNum;
 
 
 PhysAddr phys_addr_from_size_t(uint64_t v) {
@@ -107,15 +77,7 @@ VirtPageNum virt_page_num_from_virt_addr(VirtAddr virt_addr)
 
 
 
-// 定义位掩码常量
-#define PTE_V (1 << 0)   //有效位
-#define PTE_R (1 << 1)   //可读属性
-#define PTE_W (1 << 2)   //可写属性
-#define PTE_X (1 << 3)   //可执行属性
-#define PTE_U (1 << 4)   //用户访问模式
-#define PTE_G (1 << 5)   //全局映射
-#define PTE_A (1 << 6)   //访问标志位
-#define PTE_D (1 << 7)   //脏位
+
 
 
 /* 定义页表项 */
@@ -211,7 +173,7 @@ PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator) {
     // for (size_t i = 0; i < PAGE_SIZE; i++)
     // {
         
-    //     printf("%d",ptr[i]);
+    //     printk("%d",ptr[i]);
     //    // ptr++;
     // }
     return ppn;
@@ -221,7 +183,7 @@ void StackFrameAllocator_dealloc(StackFrameAllocator *allocator, PhysPageNum ppn
     uint64_t ppnValue = ppn.value;
     // 检查回收的页面之前一定被分配出去过
     if (ppnValue >= allocator->current) {
-        printf("Frame ppn=%lx has not been allocated!\n", ppnValue);
+        printk("Frame ppn=%lx has not been allocated!\n", ppnValue);
         return;
     }
     // 检查未在回收列表中
@@ -247,25 +209,25 @@ void frame_allocator_test()
     StackFrameAllocator_init(&FrameAllocatorImpl, \
             floor_phys(phys_addr_from_size_t(MEMORY_START)), \
             ceil_phys(phys_addr_from_size_t(MEMORY_END)));
-    printf("Memoery start:%d\n",floor_phys(phys_addr_from_size_t(MEMORY_START)));
-    printf("Memoery end:%d\n",ceil_phys(phys_addr_from_size_t(MEMORY_END)));
+    printk("Memoery start:%d\n",floor_phys(phys_addr_from_size_t(MEMORY_START)));
+    printk("Memoery end:%d\n",ceil_phys(phys_addr_from_size_t(MEMORY_END)));
     PhysPageNum frame[10];
     for (size_t i = 0; i < 5; i++)
     {
          frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-         printf("frame id:%d\n",frame[i].value);
+         printk("frame id:%d\n",frame[i].value);
     }
     // for (size_t i = 0; i < 5; i++)
     // {
     //     StackFrameAllocator_dealloc(&FrameAllocatorImpl,frame[i]);
-    //     printf("allocator->recycled.data.value:%d\n",FrameAllocatorImpl.recycled.data[i]);
-    //     printf("frame id:%d\n",frame[i].value);
+    //     printk("allocator->recycled.data.value:%d\n",FrameAllocatorImpl.recycled.data[i]);
+    //     printk("frame id:%d\n",frame[i].value);
     // }
     // PhysPageNum frame_test[10];
     // for (size_t i = 0; i < 5; i++)
     // {
     //      frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-    //     printf("frame id:%d\n",frame[i].value);
+    //     printk("frame id:%d\n",frame[i].value);
     // }
 }
 
@@ -363,5 +325,9 @@ void PageTable_unmap(PageTable* pt, VirtPageNum vpn)
     assert(!PageTableEntry_is_valid(pte));
     *pte = PageTableEntry_empty();
 }
+
+
+
+
 
 

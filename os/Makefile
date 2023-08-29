@@ -15,7 +15,7 @@ SRCS_ASM = \
 SRCS_C = \
 	sbi.c \
 	main.c \
-	printf.c \
+	printk.c \
 	trap.c \
 	syscall.c \
 	string.c \
@@ -25,6 +25,8 @@ SRCS_C = \
 	stack.c \
 	address.c \
 	assert.c \
+	vsprintf.c \
+	printf.c \
 
 INCLUDE:=-I./include
 SRC:=./src

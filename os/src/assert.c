@@ -4,7 +4,7 @@
 // 强制阻塞
 static void spin(char *name)
 {
-    printf("spinning in %s ...\n", name);
+    printk("spinning in %s ...\n", name);
     while (true)
         ;
 }
@@ -13,7 +13,7 @@ static void spin(char *name)
 //提示报错信息
 void assertion_failure(char *exp, char *file, char *base, int line)
 {
-    printf(
+    printk(
         "\n--> assert(%s) failed!!!\n"
         "--> file: %s \n"
         "--> base: %s \n"

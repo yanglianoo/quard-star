@@ -1,4 +1,6 @@
 #include <timeros/os.h>
+#include <timeros/syscall.h>
+#include <timeros/stdio.h>
 uint64_t syscall(size_t id, reg_t arg1, reg_t arg2, reg_t arg3) {
     uint64_t ret;
     asm volatile (
@@ -15,7 +17,7 @@ uint64_t syscall(size_t id, reg_t arg1, reg_t arg2, reg_t arg3) {
     return ret;
 }
 
-uint64_t sys_wirte(size_t fd, const char* buf, size_t len)
+uint64_t sys_write(size_t fd, const char* buf, size_t len)
 {
     return syscall(__NR_write,fd,buf, len);
 }
@@ -34,11 +36,11 @@ uint64_t sys_gettime()
 
 void task1()
 {
-    const char *message = "task1 is running!\n";
+    const char *message = "task11111111 is running!\n";
     int len = strlen(message);
     while (1)
     {
-        sys_wirte(1,message, len);
+       printf(message);
     }
 }
 
@@ -49,8 +51,7 @@ void task2()
     int len = strlen(message);
     while (1)
     {
-        sys_wirte(1,message, len);
-        
+        printf(message);
     }
 }
 
@@ -62,8 +63,8 @@ void task3()
     // uint64_t wait_for = current_timer + 500;
     while (1)
     {
-        sys_wirte(1,message, len);
        // sys_yield();
+       printf(message);
     }
     
 }

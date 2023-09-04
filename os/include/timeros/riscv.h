@@ -78,4 +78,26 @@ static inline reg_t r_mtime()
   // asm volatime("csrr %0, 0x0C01" : "=r" (x) )
   return x;
 }
+
+
+// supervisor address translation and protection;
+// holds the address of the page table.
+static inline void w_satp(reg_t x)
+{
+  asm volatile("csrw satp, %0" : : "r" (x));
+}
+
+static inline reg_t r_satp()
+{
+  reg_t x;
+  asm volatile("csrr %0, satp" : "=r" (x) );
+  return x;
+}
+
+// 刷新 TLB.
+static inline void sfence_vma()
+{
+  // the zero, zero means flush all TLB entries.
+  asm volatile("sfence.vma zero, zero");
+}
 #endif

@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "timeros - Build and debug kernel",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/os/os.elf",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/os/src",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerServerAddress": "localhost:1234",
+            "preLaunchTask": "build  timeros",
+            "miDebuggerPath": "/home/timer/riscv/riscv64-elf/bin/riscv64-unknown-elf-gdb"
+        }
+    ]
+}

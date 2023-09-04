@@ -1,7 +1,8 @@
 
 CROSS_COMPILE = riscv64-unknown-elf-
-CFLAGS = -nostdlib -fno-builtin -mcmodel=medany
+CFLAGS = -nostdlib -fno-builtin -mcmodel=medany -g
 
+GDB = riscv64-unknown-elf-gdb
 # riscv64-unknown-elf-gcc 工具链可以同时编译汇编和 C 代码
 CC = ${CROSS_COMPILE}gcc
 OBJCOPY = ${CROSS_COMPILE}objcopy
@@ -49,7 +50,12 @@ os.elf: ${OBJS}
 %.o : $(SRC)/%.S
 	${CC} ${CFLAGS} $(INCLUDE) -c -o $@ $<
 
+.PHONY : debug
+debug: 
+	@echo "os debug start..."
+	@${GDB} os.elf -q -x ./gdbinit
 
 .PHONY : clean
 clean:
-	rm -rf *.o *.bin *.elf
+	rm -rf *.o *.bin 
+

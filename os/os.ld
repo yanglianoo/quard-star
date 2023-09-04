@@ -7,10 +7,11 @@ MEMORY
 }
 SECTIONS
 {
-	. = BASE_ADDRESS;
     skernel = .;   /* 定义内核起始内存地址 */
 	.text : {
 		*(.text .text.*)
+	. = ALIGN(0x1000);
+    PROVIDE(etext = .);
 	} >ram
 
 	.rodata : {
@@ -30,4 +31,5 @@ SECTIONS
 		*(COMMON)
 	} >ram
 
+	PROVIDE(kernelend = .);
 }

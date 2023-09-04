@@ -2,7 +2,7 @@
 #include <timeros/stdio.h>
 void __sys_write(size_t fd, const char* data, size_t len)
 {
-    if(fd ==1)
+    if(fd == stdout || fd == stderr)
     {
         printk(data);
     }
@@ -25,6 +25,7 @@ uint64_t __sys_gettime()
 uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3) {
         switch (syscall_id)
         {
+        
         case __NR_write:
             __sys_write(arg1, arg2, arg3);
             break;

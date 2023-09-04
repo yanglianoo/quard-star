@@ -1,7 +1,7 @@
 #ifndef TOS_OS_H__
 #define TOS_OS_H__
 
-#include <stddef.h>
+
 #include <stdarg.h>
 #include "types.h"
 #include "context.h"
@@ -13,7 +13,6 @@
 /* trap.c */
 extern void trap_init();
 
-/* sbi.c */
 
 /* kerneltrap.S*/
 extern void __alltraps(void);

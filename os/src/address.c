@@ -67,6 +67,13 @@ PhysPageNum ceil_phys(PhysAddr phys_addr) {
     return phys_page_num;
 }
 
+/* 物理地址向下取整 */
+VirtPageNum floor_virts(VirtAddr virt_addr) {
+    VirtPageNum virt_page_num;
+    virt_page_num.value = virt_addr.value / PAGE_SIZE;
+    return virt_page_num;
+}
+
 /* 把虚拟地址转换为虚拟页号 */
 VirtPageNum virt_page_num_from_virt_addr(VirtAddr virt_addr)
 {
@@ -78,38 +85,33 @@ VirtPageNum virt_page_num_from_virt_addr(VirtAddr virt_addr)
 
 
 
-
-
-/* 定义页表项 */
-
-typedef struct  
-{
-    uint64_t bits;
-}PageTableEntry;
-
-
+/* 新建一个页表项 */
 PageTableEntry PageTableEntry_new(PhysPageNum ppn, uint8_t PTEFlags) {
     PageTableEntry entry;
     entry.bits = (ppn.value << 10) | PTEFlags;
     return entry;
 }
 
+/* 判断页表项是否为空 */
 PageTableEntry PageTableEntry_empty() {
     PageTableEntry entry;
     entry.bits = 0;
     return entry;
 }
 
+/* 获取下级页表的物理页号 */
 PhysPageNum PageTableEntry_ppn(PageTableEntry *entry) {
     PhysPageNum ppn;
     ppn.value = (entry->bits >> 10) & ((1ul << 44) - 1);
     return ppn;
 }
 
+/* 获取页表项的标志位 */
 uint8_t PageTableEntry_flags(PageTableEntry *entry) {
     return entry->bits & 0xFF;
 }
 
+/* 判断页表项是否为空 */
 bool PageTableEntry_is_valid(PageTableEntry *entry) {
     uint8_t entryFlags = PageTableEntry_flags(entry);
     return (entryFlags & PTE_V) != 0;
@@ -129,11 +131,11 @@ PageTableEntry* get_pte_array(PhysPageNum ppn)
     return (PageTableEntry*) addr.value;
 }
 
-void* get_mut(PhysPageNum ppn) {
+// void* get_mut(PhysPageNum ppn) {
 
-    PhysAddr addr = phys_addr_from_phys_page_num(ppn);
-    return (void*)addr.value; // Assuming addr is a valid memory address
-}
+//     PhysAddr addr = phys_addr_from_phys_page_num(ppn);
+//     return (void*)addr.value; // Assuming addr is a valid memory address
+// }
 
 
 typedef struct 
@@ -201,36 +203,49 @@ void StackFrameAllocator_dealloc(StackFrameAllocator *allocator, PhysPageNum ppn
 
 
 
-static StackFrameAllocator FrameAllocatorImpl;
+// static StackFrameAllocator FrameAllocatorImpl;
 
-void frame_allocator_test()
+// void frame_allocator_test()
+// {
+//     StackFrameAllocator_new(&FrameAllocatorImpl);
+//     StackFrameAllocator_init(&FrameAllocatorImpl, \
+//             floor_phys(phys_addr_from_size_t(MEMORY_START)), \
+//             ceil_phys(phys_addr_from_size_t(MEMORY_END)));
+//     printk("Memoery start:%d\n",floor_phys(phys_addr_from_size_t(MEMORY_START)));
+//     printk("Memoery end:%d\n",ceil_phys(phys_addr_from_size_t(MEMORY_END)));
+//     PhysPageNum frame[10];
+//     for (size_t i = 0; i < 5; i++)
+//     {
+//          frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
+//          printk("frame id:%d\n",frame[i].value);
+//     }
+//     for (size_t i = 0; i < 5; i++)
+//     {
+//         StackFrameAllocator_dealloc(&FrameAllocatorImpl,frame[i]);
+//         printk("allocator->recycled.data.value:%d\n",FrameAllocatorImpl.recycled.data[i]);
+//         printk("frame id:%d\n",frame[i].value);
+//     }
+//     PhysPageNum frame_test[10];
+//     for (size_t i = 0; i < 5; i++)
+//     {
+//          frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
+//         printk("frame id:%d\n",frame[i].value);
+//     }
+// }
+
+StackFrameAllocator FrameAllocatorImpl;
+extern char kernelend[];
+#define PGROUNDDOWN(a) (((a)) & ~(PAGE_SIZE-1))
+void frame_alloctor_init()
 {
+    // 初始化时 kernelend 需向上取整
     StackFrameAllocator_new(&FrameAllocatorImpl);
     StackFrameAllocator_init(&FrameAllocatorImpl, \
-            floor_phys(phys_addr_from_size_t(MEMORY_START)), \
+            ceil_phys(phys_addr_from_size_t(kernelend)), \
             ceil_phys(phys_addr_from_size_t(MEMORY_END)));
-    printk("Memoery start:%d\n",floor_phys(phys_addr_from_size_t(MEMORY_START)));
-    printk("Memoery end:%d\n",ceil_phys(phys_addr_from_size_t(MEMORY_END)));
-    PhysPageNum frame[10];
-    for (size_t i = 0; i < 5; i++)
-    {
-         frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-         printk("frame id:%d\n",frame[i].value);
-    }
-    // for (size_t i = 0; i < 5; i++)
-    // {
-    //     StackFrameAllocator_dealloc(&FrameAllocatorImpl,frame[i]);
-    //     printk("allocator->recycled.data.value:%d\n",FrameAllocatorImpl.recycled.data[i]);
-    //     printk("frame id:%d\n",frame[i].value);
-    // }
-    // PhysPageNum frame_test[10];
-    // for (size_t i = 0; i < 5; i++)
-    // {
-    //      frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-    //     printk("frame id:%d\n",frame[i].value);
-    // }
+    printk("Memoery start:%p\n",kernelend);
+    printk("Memoery end:%p\n",MEMORY_END);
 }
-
 
 
 
@@ -238,29 +253,29 @@ void frame_allocator_test()
 /* 拿到虚拟页号的三级索引，按照从高到低的顺序返回 */
 void indexes(VirtPageNum vpn, size_t* result) 
 {
+   // printk("vpn:%d\n",vpn.value);
     size_t idx[3];
     for (int i = 2; i >= 0; i--) {
         idx[i] = vpn.value & 0x1ff;   // 1_1111_1111 = 0x1ff
         vpn.value >>= 9;
+       // printk("result:%d\n",idx[i]);
     }
 
     for (int i = 0; i < 3; i++) {
         result[i] = idx[i];
+      //  printk("result:%d\n",result[i]);
     }
 }
 
 
 
-typedef struct {
-    PhysPageNum root_ppn; //根节点
-    Stack frames;         //页帧
-}PageTable;
+
 
 PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
 {
     
     // 拿到虚拟页号的三级索引，保存到idx数组中
-    size_t* idx;
+    size_t idx[3];
     indexes(vpn, idx); 
     //根节点
     PhysPageNum ppn = pt->root_ppn;
@@ -268,6 +283,7 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
     for (int i = 0; i < 3; i++) 
     {
         //拿到具体的页表项
+        //printk("idx:%d\n",idx[i]);
         PageTableEntry* pte =  &get_pte_array(ppn)[idx[i]];
             if (i == 2) {
                 return pte;
@@ -279,7 +295,7 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
                //新建一个页表项
                *pte =  PageTableEntry_new(frame,PTE_V);
                //压入栈中
-                push(&pt->frames,frame.value);
+               // push(&pt->frames,frame.value);
             }
         //取出进入下级页表的物理页号
         ppn = PageTableEntry_ppn(pte);
@@ -312,18 +328,87 @@ PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
     
 }
 
-void PageTable_map(PageTable* pt,VirtPageNum vpn, PhysPageNum ppn, uint8_t pteflgs)
+void PageTable_map(PageTable* pt,VirtAddr va, PhysAddr pa, u64 size ,uint8_t pteflgs)
 {
-    PageTableEntry* pte = find_pte_create(pt,vpn);
-    assert(!PageTableEntry_is_valid(pte));
-    *pte = PageTableEntry_new(ppn,PTE_V | pteflgs);
+    if(size == 0)
+        panic("mappages: size");
+    
+    PhysPageNum ppn = floor_phys(pa);
+    VirtPageNum vpn = floor_virts(va);
+    u64 last = (va.value + size - 1) / PAGE_SIZE;
+
+    //printk("ppn:%d\n",ppn.value);
+    for(;;)
+    {
+        PageTableEntry* pte = find_pte_create(pt,vpn);
+
+        assert(!PageTableEntry_is_valid(pte));
+        *pte = PageTableEntry_new(ppn,PTE_V | pteflgs);
+
+        if( vpn.value == last )
+            break;
+        // 一页一页映射
+        vpn.value+=1;
+        ppn.value+=1;
+    }
+
+
+
 }
 
+/* 取消映射的函数先不管 */
 void PageTable_unmap(PageTable* pt, VirtPageNum vpn)
 {
     PageTableEntry* pte = find_pte(pt,vpn);
     assert(!PageTableEntry_is_valid(pte));
     *pte = PageTableEntry_empty();
+}
+
+extern char etext[];
+
+PageTable kvmmake(void)
+{
+    PageTable pt;
+    PhysPageNum root_ppn =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
+    pt.root_ppn = root_ppn;
+    printk("root_ppn:%p\n",phys_addr_from_phys_page_num(root_ppn));
+
+    printk("etext:%p\n",(u64)etext);
+    // // map kernel text executable and read-only.
+    PageTable_map(&pt,virt_addr_from_size_t(KERNBASE),phys_addr_from_size_t(KERNBASE), \
+                    (u64)etext-KERNBASE , PTE_R | PTE_X | PTE_U) ;
+    printk("finish kernel text map!\n");
+    // map kernel data and the physical RAM we'll make use of. 
+    PageTable_map(&pt,virt_addr_from_size_t((u64)etext),phys_addr_from_size_t((u64)etext ), \
+                    MEMORY_END - (u64)etext , PTE_R | PTE_W | PTE_U) ;
+    printk("finish kernel data and physical RAM map!\n");
+    return pt;
+}
+
+PageTable kernel_pagetable;
+
+void kvminit()
+{
+  kernel_pagetable = kvmmake();
+}
+
+#define SATP_SV39 (8L << 60)
+#define MAKE_SATP(pagetable) (SATP_SV39 | (((u64)pagetable)))
+
+void kvminithart()
+{
+  // wait for any previous writes to the page table memory to finish.
+  printk("satp:%lx\n",MAKE_SATP(kernel_pagetable.root_ppn.value));
+  sfence_vma();
+  
+  w_satp(MAKE_SATP(kernel_pagetable.root_ppn.value));
+  
+  // flush stale entries from the TLB.
+  sfence_vma();
+  reg_t satp = r_satp();
+
+  printk("satp:%lx\n",satp);
+
 }
 
 

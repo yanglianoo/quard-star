@@ -67,7 +67,7 @@ PhysPageNum ceil_phys(PhysAddr phys_addr) {
     return phys_page_num;
 }
 
-/* 物理地址向下取整 */
+/* 虚拟地址向下取整 */
 VirtPageNum floor_virts(VirtAddr virt_addr) {
     VirtPageNum virt_page_num;
     virt_page_num.value = virt_addr.value / PAGE_SIZE;
@@ -171,6 +171,7 @@ PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator) {
     /* 清空此页内存 ： 注意不能覆盖内核代码区，分配的内存只能是未使用部分*/
     PhysAddr addr = phys_addr_from_phys_page_num(ppn);
     memset(addr.value,0,PAGE_SIZE);
+    printk("addr.vallue:%p\n",addr.value);
     // uint8_t* ptr = get_bytes_array(ppn);
     // for (size_t i = 0; i < PAGE_SIZE; i++)
     // {
@@ -242,9 +243,9 @@ void frame_alloctor_init()
     StackFrameAllocator_new(&FrameAllocatorImpl);
     StackFrameAllocator_init(&FrameAllocatorImpl, \
             ceil_phys(phys_addr_from_size_t(kernelend)), \
-            ceil_phys(phys_addr_from_size_t(MEMORY_END)));
+            ceil_phys(phys_addr_from_size_t(PHYSTOP)));
     printk("Memoery start:%p\n",kernelend);
-    printk("Memoery end:%p\n",MEMORY_END);
+    printk("Memoery end:%p\n",PHYSTOP);
 }
 
 
@@ -253,7 +254,6 @@ void frame_alloctor_init()
 /* 拿到虚拟页号的三级索引，按照从高到低的顺序返回 */
 void indexes(VirtPageNum vpn, size_t* result) 
 {
-   // printk("vpn:%d\n",vpn.value);
     size_t idx[3];
     for (int i = 2; i >= 0; i--) {
         idx[i] = vpn.value & 0x1ff;   // 1_1111_1111 = 0x1ff
@@ -283,7 +283,6 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
     for (int i = 0; i < 3; i++) 
     {
         //拿到具体的页表项
-        //printk("idx:%d\n",idx[i]);
         PageTableEntry* pte =  &get_pte_array(ppn)[idx[i]];
             if (i == 2) {
                 return pte;
@@ -299,6 +298,8 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
             }
         //取出进入下级页表的物理页号
         ppn = PageTableEntry_ppn(pte);
+      //  printk("ppn.value:%d\n",ppn.value);
+
     }
 
 }
@@ -336,17 +337,16 @@ void PageTable_map(PageTable* pt,VirtAddr va, PhysAddr pa, u64 size ,uint8_t pte
     PhysPageNum ppn = floor_phys(pa);
     VirtPageNum vpn = floor_virts(va);
     u64 last = (va.value + size - 1) / PAGE_SIZE;
-
-    //printk("ppn:%d\n",ppn.value);
     for(;;)
     {
         PageTableEntry* pte = find_pte_create(pt,vpn);
-
         assert(!PageTableEntry_is_valid(pte));
         *pte = PageTableEntry_new(ppn,PTE_V | pteflgs);
-
+         
+       // printk("vpn.value:%d\n",vpn.value);
         if( vpn.value == last )
             break;
+        
         // 一页一页映射
         vpn.value+=1;
         ppn.value+=1;
@@ -374,13 +374,13 @@ PageTable kvmmake(void)
     printk("root_ppn:%p\n",phys_addr_from_phys_page_num(root_ppn));
 
     printk("etext:%p\n",(u64)etext);
-    // // map kernel text executable and read-only.
+    // map kernel text executable and read-only.
     PageTable_map(&pt,virt_addr_from_size_t(KERNBASE),phys_addr_from_size_t(KERNBASE), \
-                    (u64)etext-KERNBASE , PTE_R | PTE_X | PTE_U) ;
+                    (u64)etext-KERNBASE , PTE_R | PTE_X ) ;
     printk("finish kernel text map!\n");
     // map kernel data and the physical RAM we'll make use of. 
     PageTable_map(&pt,virt_addr_from_size_t((u64)etext),phys_addr_from_size_t((u64)etext ), \
-                    MEMORY_END - (u64)etext , PTE_R | PTE_W | PTE_U) ;
+                    PHYSTOP - (u64)etext , PTE_R | PTE_W ) ;
     printk("finish kernel data and physical RAM map!\n");
     return pt;
 }
@@ -409,6 +409,7 @@ void kvminithart()
 
   printk("satp:%lx\n",satp);
 
+    
 }
 
 

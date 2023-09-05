@@ -1,4 +1,4 @@
 set disassemble-next-line on
-b _start
+b kvminithart
 target remote : 1234
 c

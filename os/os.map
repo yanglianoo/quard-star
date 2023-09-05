@@ -85,7 +85,7 @@ LOAD printf.o
                 0x0000000080200cb2                push
                 0x0000000080200d1c                pop
                 0x0000000080200d78                top
- .text          0x0000000080200dc0      0x9de address.o
+ .text          0x0000000080200dc0      0x9f4 address.o
                 0x0000000080200e06                phys_addr_from_size_t
                 0x0000000080200e2a                phys_page_num_from_size_t
                 0x0000000080200e4e                size_t_from_phys_addr
@@ -109,27 +109,27 @@ LOAD printf.o
                 0x00000000802010be                StackFrameAllocator_new
                 0x00000000802010f0                StackFrameAllocator_init
                 0x000000008020111e                StackFrameAllocator_alloc
-                0x00000000802011a2                StackFrameAllocator_dealloc
-                0x0000000080201244                frame_alloctor_init
-                0x00000000802012c8                indexes
-                0x0000000080201356                find_pte_create
-                0x0000000080201420                find_pte
-                0x00000000802014c8                PageTable_map
-                0x00000000802015b6                PageTable_unmap
-                0x0000000080201620                kvmmake
-                0x0000000080201716                kvminit
-                0x0000000080201738                kvminithart
- .text          0x000000008020179e       0x6c assert.o
-                0x00000000802017bc                assertion_failure
- .text          0x000000008020180a      0x430 vsprintf.o
-                0x000000008020180a                _vsnprintf
- .text          0x0000000080201c3a       0xc2 printf.o
-                0x0000000080201ca4                printf
+                0x00000000802011b4                StackFrameAllocator_dealloc
+                0x0000000080201256                frame_alloctor_init
+                0x00000000802012de                indexes
+                0x000000008020136c                find_pte_create
+                0x0000000080201436                find_pte
+                0x00000000802014de                PageTable_map
+                0x00000000802015cc                PageTable_unmap
+                0x0000000080201636                kvmmake
+                0x000000008020172c                kvminit
+                0x000000008020174e                kvminithart
+ .text          0x00000000802017b4       0x6c assert.o
+                0x00000000802017d2                assertion_failure
+ .text          0x0000000080201820      0x430 vsprintf.o
+                0x0000000080201820                _vsnprintf
+ .text          0x0000000080201c50       0xc2 printf.o
+                0x0000000080201cba                printf
                 0x0000000080202000                . = ALIGN (0x1000)
- *fill*         0x0000000080201cfc      0x304 
+ *fill*         0x0000000080201d12      0x2ee 
                 0x0000000080202000                PROVIDE (etext = .)
 
-.rodata         0x0000000080202000      0x394
+.rodata         0x0000000080202000      0x3a4
  *(.rodata .rodata.*)
  .rodata        0x0000000080202000       0x11 main.o
  *fill*         0x0000000080202011        0x7 
@@ -144,17 +144,17 @@ LOAD printf.o
  .rodata        0x0000000080202130       0x4f task.o
  *fill*         0x000000008020217f        0x1 
  .rodata        0x0000000080202180       0x38 stack.o
- .rodata        0x00000000802021b8      0x10a address.o
- *fill*         0x00000000802022c2        0x6 
- .rodata        0x00000000802022c8       0x74 assert.o
- .rodata        0x000000008020233c       0x58 vsprintf.o
+ .rodata        0x00000000802021b8      0x11a address.o
+ *fill*         0x00000000802022d2        0x6 
+ .rodata        0x00000000802022d8       0x74 assert.o
+ .rodata        0x000000008020234c       0x58 vsprintf.o
 
-.rela.dyn       0x0000000080202398        0x0
- .rela.text     0x0000000080202398        0x0 entry.o
+.rela.dyn       0x00000000802023a8        0x0
+ .rela.text     0x00000000802023a8        0x0 entry.o
 
-.data           0x0000000080202394      0xc6c
+.data           0x00000000802023a4      0xc5c
                 0x0000000080203000                . = ALIGN (0x1000)
- *fill*         0x0000000080202394      0xc6c 
+ *fill*         0x00000000802023a4      0xc5c 
  *(.sdata .sdata.*)
  *(.data .data.*)
  .data          0x0000000080203000        0x0 entry.o
@@ -263,7 +263,7 @@ OUTPUT(os.elf elf64-littleriscv)
  .comment       0x000000000000001b       0x1c vsprintf.o
  .comment       0x000000000000001b       0x1c printf.o
 
-.debug_line     0x0000000000000000     0x1fa2
+.debug_line     0x0000000000000000     0x1fa8
  .debug_line    0x0000000000000000       0x52 entry.o
  .debug_line    0x0000000000000052      0x220 kerneltrap.o
  .debug_line    0x0000000000000272       0x72 switch.o
@@ -277,10 +277,10 @@ OUTPUT(os.elf elf64-littleriscv)
  .debug_line    0x0000000000000a9a      0x294 task.o
  .debug_line    0x0000000000000d2e      0x16e timer.o
  .debug_line    0x0000000000000e9c      0x18f stack.o
- .debug_line    0x000000000000102b      0x93f address.o
- .debug_line    0x000000000000196a       0x80 assert.o
- .debug_line    0x00000000000019ea      0x4e8 vsprintf.o
- .debug_line    0x0000000000001ed2       0xd0 printf.o
+ .debug_line    0x000000000000102b      0x945 address.o
+ .debug_line    0x0000000000001970       0x80 assert.o
+ .debug_line    0x00000000000019f0      0x4e8 vsprintf.o
+ .debug_line    0x0000000000001ed8       0xd0 printf.o
 
 .debug_line_str
                 0x0000000000000000      0x1b2
@@ -417,25 +417,25 @@ OUTPUT(os.elf elf64-littleriscv)
                                          0x35 (size before relaxing)
  .debug_str     0x0000000000000052      0x2a9 sbi.o
                                         0x2d7 (size before relaxing)
- .debug_str     0x00000000000002fb       0x59 main.o
-                                        0x142 (size before relaxing)
- .debug_str     0x0000000000000354       0x4d printk.o
+ .debug_str     0x00000000000002fb       0x56 main.o
+                                        0x13f (size before relaxing)
+ .debug_str     0x0000000000000351       0x4d printk.o
                                         0x160 (size before relaxing)
- .debug_str     0x00000000000003a1       0x6f trap.o
+ .debug_str     0x000000000000039e       0x6f trap.o
                                         0x188 (size before relaxing)
- .debug_str     0x0000000000000410       0x5f syscall.o
+ .debug_str     0x000000000000040d       0x5f syscall.o
                                         0x18d (size before relaxing)
- .debug_str     0x000000000000046f       0x20 string.o
+ .debug_str     0x000000000000046c       0x20 string.o
                                         0x110 (size before relaxing)
- .debug_str     0x000000000000048f       0x45 app.o
+ .debug_str     0x000000000000048c       0x45 app.o
                                         0x195 (size before relaxing)
- .debug_str     0x00000000000004d4      0x116 task.o
+ .debug_str     0x00000000000004d1      0x125 task.o
                                         0x258 (size before relaxing)
- .debug_str     0x00000000000005ea       0x14 timer.o
+ .debug_str     0x00000000000005f6       0x14 timer.o
                                         0x15e (size before relaxing)
- .debug_str     0x00000000000005fe       0x2a stack.o
+ .debug_str     0x000000000000060a       0x2a stack.o
                                         0x134 (size before relaxing)
- .debug_str     0x0000000000000628      0x376 address.o
+ .debug_str     0x0000000000000634      0x36a address.o
                                         0x51b (size before relaxing)
  .debug_str     0x000000000000099e       0x19 assert.o
                                          0xf8 (size before relaxing)

@@ -25,7 +25,7 @@
 
 #define MEMORY_END 0x80800000    // 0x80200000 ~ 0x80800000
 #define KERNBASE 0x80200000L  
-
+#define PHYSTOP (KERNBASE + 128*1024*1024)
 /* 物理地址 */
 typedef struct {
     uint64_t value; 

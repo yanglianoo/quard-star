@@ -73,23 +73,8 @@ typedef struct {
 }PageTable;
 
 
-// 
-typedef struct SimpleRange {
-    u64 l;
-    u64 r;
-} SimpleRange;
+void frame_alloctor_init();
+void kvminit();
+void kvminithart();
 
-// 内存映射方式
-typedef enum 
-{
-    Identical, //恒等映射
-    Framed,    //随机映射
-}MapType;
-
-typedef struct {
-    SimpleRange vpn_range;
-    MapType map_type;
-    u8 map_perm;
-
-}MapArea;
 #endif

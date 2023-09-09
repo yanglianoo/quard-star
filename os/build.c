@@ -3,7 +3,7 @@
 #include <string.h>
 #include <dirent.h>  
 
-#define TARGET_PATH "../src/"
+#define TARGET_PATH "../user/bin/"
 
 int compare_strings(const void* a, const void* b) {
     return strcmp(*(const char**)a, *(const char**)b);

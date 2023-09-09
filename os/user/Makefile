@@ -9,7 +9,7 @@ INCLUDE:=-I../include
 LIB = ../lib
 
 write: write.c $(LIB)/*.c
-	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -o bin/write.bin $^
+	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -o bin/write $^
 
 time: time.c 
-	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -o bin/time.bin $^
+	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -o bin/time $^

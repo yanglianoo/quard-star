@@ -72,9 +72,12 @@ if [ ! -d "$SHELL_FOLDER/output/os" ]; then
 mkdir $SHELL_FOLDER/output/os
 fi
 cd $SHELL_FOLDER/os
+# 编译app加载模块
+make build_app
+./build.out
+# 编译os
 make
 cp $SHELL_FOLDER/os/os.bin $SHELL_FOLDER/output/os/os.bin
-./build.out
 make clean
 
 

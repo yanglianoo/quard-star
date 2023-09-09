@@ -1,8 +1,6 @@
 #include <timeros/os.h>
 #include <timeros/assert.h>
-extern void frame_alloctor_init();
-extern void kvminit();
-extern void kvminithart();
+#include <timeros/loader.h>
 void os_main()
 {
    printk("hello timer os!\n");
@@ -10,6 +8,7 @@ void os_main()
    // 内存分配器初始化
    frame_alloctor_init();
    
+   get_app_data(2);
    //初始化内存
    kvminit();
 
@@ -18,6 +17,7 @@ void os_main()
 
    //trap初始化
    trap_init();
+
 
 
    while (1)

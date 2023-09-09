@@ -29,6 +29,7 @@ SRCS_C = \
 	assert.c \
 	vsprintf.c \
 	printf.c \
+	loader.c \
 
 INCLUDE:=-I./include
 SRC:=./src

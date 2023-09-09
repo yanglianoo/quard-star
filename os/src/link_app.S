@@ -12,12 +12,12 @@ _num_app:
 .global app_0_end
 .align 3
 app_0_start:
-.incbin "../src/time"
+.incbin "../user/bin/time"
 app_0_end:
 .section .data
 .global app_1_start
 .global app_1_end
 .align 3
 app_1_start:
-.incbin "../src/write"
+.incbin "../user/bin/write"
 app_1_end:

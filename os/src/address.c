@@ -171,7 +171,6 @@ PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator) {
     /* 清空此页内存 ： 注意不能覆盖内核代码区，分配的内存只能是未使用部分*/
     PhysAddr addr = phys_addr_from_phys_page_num(ppn);
     memset(addr.value,0,PAGE_SIZE);
-    printk("addr.vallue:%p\n",addr.value);
     // uint8_t* ptr = get_bytes_array(ppn);
     // for (size_t i = 0; i < PAGE_SIZE; i++)
     // {
@@ -204,39 +203,10 @@ void StackFrameAllocator_dealloc(StackFrameAllocator *allocator, PhysPageNum ppn
 
 
 
-// static StackFrameAllocator FrameAllocatorImpl;
 
-// void frame_allocator_test()
-// {
-//     StackFrameAllocator_new(&FrameAllocatorImpl);
-//     StackFrameAllocator_init(&FrameAllocatorImpl, \
-//             floor_phys(phys_addr_from_size_t(MEMORY_START)), \
-//             ceil_phys(phys_addr_from_size_t(MEMORY_END)));
-//     printk("Memoery start:%d\n",floor_phys(phys_addr_from_size_t(MEMORY_START)));
-//     printk("Memoery end:%d\n",ceil_phys(phys_addr_from_size_t(MEMORY_END)));
-//     PhysPageNum frame[10];
-//     for (size_t i = 0; i < 5; i++)
-//     {
-//          frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-//          printk("frame id:%d\n",frame[i].value);
-//     }
-//     for (size_t i = 0; i < 5; i++)
-//     {
-//         StackFrameAllocator_dealloc(&FrameAllocatorImpl,frame[i]);
-//         printk("allocator->recycled.data.value:%d\n",FrameAllocatorImpl.recycled.data[i]);
-//         printk("frame id:%d\n",frame[i].value);
-//     }
-//     PhysPageNum frame_test[10];
-//     for (size_t i = 0; i < 5; i++)
-//     {
-//          frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-//         printk("frame id:%d\n",frame[i].value);
-//     }
-// }
 
 StackFrameAllocator FrameAllocatorImpl;
 extern char kernelend[];
-#define PGROUNDDOWN(a) (((a)) & ~(PAGE_SIZE-1))
 void frame_alloctor_init()
 {
     // 初始化时 kernelend 需向上取整
@@ -298,10 +268,7 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
             }
         //取出进入下级页表的物理页号
         ppn = PageTableEntry_ppn(pte);
-      //  printk("ppn.value:%d\n",ppn.value);
-
     }
-
 }
 
 PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
@@ -343,7 +310,6 @@ void PageTable_map(PageTable* pt,VirtAddr va, PhysAddr pa, u64 size ,uint8_t pte
         assert(!PageTableEntry_is_valid(pte));
         *pte = PageTableEntry_new(ppn,PTE_V | pteflgs);
          
-       // printk("vpn.value:%d\n",vpn.value);
         if( vpn.value == last )
             break;
         
@@ -351,9 +317,6 @@ void PageTable_map(PageTable* pt,VirtAddr va, PhysAddr pa, u64 size ,uint8_t pte
         vpn.value+=1;
         ppn.value+=1;
     }
-
-
-
 }
 
 /* 取消映射的函数先不管 */
@@ -386,7 +349,6 @@ PageTable kvmmake(void)
 }
 
 PageTable kernel_pagetable;
-
 void kvminit()
 {
   kernel_pagetable = kvmmake();
@@ -398,18 +360,12 @@ void kvminit()
 void kvminithart()
 {
   // wait for any previous writes to the page table memory to finish.
-  printk("satp:%lx\n",MAKE_SATP(kernel_pagetable.root_ppn.value));
   sfence_vma();
-  
   w_satp(MAKE_SATP(kernel_pagetable.root_ppn.value));
-  
   // flush stale entries from the TLB.
   sfence_vma();
   reg_t satp = r_satp();
-
   printk("satp:%lx\n",satp);
-
-    
 }
 
 

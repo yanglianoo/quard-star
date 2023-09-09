@@ -23,9 +23,11 @@
 #define PPN_WIDTH_SV39 (PA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 物理页号 44位 [55:12]
 #define VPN_WIDTH_SV39 (VA_WIDTH_SV39 - PAGE_SIZE_BITS)  // 虚拟页号 27位 [38:12]
 
-#define MEMORY_END 0x80800000    // 0x80200000 ~ 0x80800000
+//内核开始地址
 #define KERNBASE 0x80200000L  
+//物理地址结束地址
 #define PHYSTOP (KERNBASE + 128*1024*1024)
+
 /* 物理地址 */
 typedef struct {
     uint64_t value; 

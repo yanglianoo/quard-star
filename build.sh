@@ -74,6 +74,7 @@ fi
 cd $SHELL_FOLDER/os
 make
 cp $SHELL_FOLDER/os/os.bin $SHELL_FOLDER/output/os/os.bin
+./build.out
 make clean
 
 

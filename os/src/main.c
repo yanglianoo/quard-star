@@ -1,6 +1,5 @@
 #include <timeros/os.h>
-#include <timeros/assert.h>
-#include <timeros/loader.h>
+
 void os_main()
 {
    printk("hello timer os!\n");
@@ -8,28 +7,24 @@ void os_main()
    // 内存分配器初始化
    frame_alloctor_init();
    
-   get_app_data(2);
    //初始化内存
    kvminit();
+
+   load_app(0);
+   app_init(0);
 
    //映射内核
    kvminithart();
 
    //trap初始化
-   trap_init();
+   set_kernel_trap_entry();
 
-
-
-   while (1)
-   {
-      /* code */
-   }
    
    // task_init();
 
-   // timer_init();
+   timer_init();
 
    
-   // run_first_task();
+   run_first_task();
 
 }

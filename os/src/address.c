@@ -1,6 +1,4 @@
-#include <timeros/address.h>
-
-
+#include <timeros/os.h>
 
 PhysAddr phys_addr_from_size_t(uint64_t v) {
     PhysAddr addr;
@@ -138,13 +136,14 @@ PageTableEntry* get_pte_array(PhysPageNum ppn)
 // }
 
 
+
+/* 内存分配器 */
 typedef struct 
 {
     uint64_t current;   //空闲内存的起始物理页号
     uint64_t  end;      //空闲内存的结束物理页号
     Stack recycled;     // 
 }StackFrameAllocator;
-
 
 void StackFrameAllocator_new(StackFrameAllocator* allocator) {
     allocator->current = 0;
@@ -171,13 +170,6 @@ PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator) {
     /* 清空此页内存 ： 注意不能覆盖内核代码区，分配的内存只能是未使用部分*/
     PhysAddr addr = phys_addr_from_phys_page_num(ppn);
     memset(addr.value,0,PAGE_SIZE);
-    // uint8_t* ptr = get_bytes_array(ppn);
-    // for (size_t i = 0; i < PAGE_SIZE; i++)
-    // {
-        
-    //     printk("%d",ptr[i]);
-    //    // ptr++;
-    // }
     return ppn;
 }
 
@@ -228,12 +220,10 @@ void indexes(VirtPageNum vpn, size_t* result)
     for (int i = 2; i >= 0; i--) {
         idx[i] = vpn.value & 0x1ff;   // 1_1111_1111 = 0x1ff
         vpn.value >>= 9;
-       // printk("result:%d\n",idx[i]);
     }
 
     for (int i = 0; i < 3; i++) {
         result[i] = idx[i];
-      //  printk("result:%d\n",result[i]);
     }
 }
 
@@ -263,12 +253,16 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
                 PhysPageNum frame =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
                //新建一个页表项
                *pte =  PageTableEntry_new(frame,PTE_V);
-               //压入栈中
-               // push(&pt->frames,frame.value);
             }
         //取出进入下级页表的物理页号
         ppn = PageTableEntry_ppn(pte);
     }
+}
+
+PhysPageNum kalloc(void)
+{
+    PhysPageNum frame =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
+    return frame;
 }
 
 PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
@@ -278,7 +272,7 @@ PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
     indexes(vpn, idx); 
     //根节点
     PhysPageNum ppn = pt->root_ppn;
-    //从根节点开始遍历，如果没有pte，就分配一页内存，然后创建一个
+    //从根节点开始遍历，如果没有pte，就返回空
     for (int i = 0; i < 3; i++) 
     {
         //拿到具体的页表项
@@ -328,11 +322,12 @@ void PageTable_unmap(PageTable* pt, VirtPageNum vpn)
 }
 
 extern char etext[];
+extern char trampoline[];
 
 PageTable kvmmake(void)
 {
     PageTable pt;
-    PhysPageNum root_ppn =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
+    PhysPageNum root_ppn =  kalloc();
     pt.root_ppn = root_ppn;
     printk("root_ppn:%p\n",phys_addr_from_phys_page_num(root_ppn));
 
@@ -345,23 +340,31 @@ PageTable kvmmake(void)
     PageTable_map(&pt,virt_addr_from_size_t((u64)etext),phys_addr_from_size_t((u64)etext ), \
                     PHYSTOP - (u64)etext , PTE_R | PTE_W ) ;
     printk("finish kernel data and physical RAM map!\n");
+    // map the trampoline for trap entry/exit to the highest virtual address in the kernel.
+    PageTable_map(&pt, virt_addr_from_size_t(TRAMPOLINE), phys_addr_from_size_t((u64)trampoline), \
+                    PAGE_SIZE, PTE_R | PTE_X );
+    printk("finish TRAMPOLINE Page map!\n");
+
+    //allocate and map a kernel stack for each process.
+    proc_mapstacks(&pt);
+    printk("finish kernel stack map!\n");
+    
     return pt;
 }
 
 PageTable kernel_pagetable;
+u64 kernel_satp;
 void kvminit()
 {
   kernel_pagetable = kvmmake();
+  kernel_satp = MAKE_SATP(kernel_pagetable.root_ppn.value);
 }
-
-#define SATP_SV39 (8L << 60)
-#define MAKE_SATP(pagetable) (SATP_SV39 | (((u64)pagetable)))
 
 void kvminithart()
 {
   // wait for any previous writes to the page table memory to finish.
   sfence_vma();
-  w_satp(MAKE_SATP(kernel_pagetable.root_ppn.value));
+  w_satp(kernel_satp);
   // flush stale entries from the TLB.
   sfence_vma();
   reg_t satp = r_satp();

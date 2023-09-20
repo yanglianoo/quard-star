@@ -1,5 +1,4 @@
 #include <timeros/os.h>
-#include <timeros/stdio.h>
 
 #define USER_STACK_SIZE (4096 * 2)
 #define KERNEL_STACK_SIZE (4096 * 2)
@@ -17,7 +16,7 @@ struct TaskControlBlock tasks[MAX_TASKS];
 struct TaskContext tcx_init(reg_t kstack_ptr) {
     struct TaskContext task_ctx;
 
-    task_ctx.ra = __restore;
+    task_ctx.ra = trap_return;
     task_ctx.sp = kstack_ptr;
     task_ctx.s0 = 0;
     task_ctx.s1 = 0;
@@ -36,33 +35,110 @@ struct TaskContext tcx_init(reg_t kstack_ptr) {
 }
 
 
-void task_create(void (*task_entry)(void))
+/* 为每个应用程序映射内核栈,内核空间以及进行了映射 */
+void proc_mapstacks(PageTable* kpgtbl)
 {
-    if(_top < MAX_TASKS)
-    {
-        /* 对于每个任务先构造该任务的trap上下文，包括入口地址和用户栈指针，并将其压入到内核栈顶*/
-        TrapContext* cx_ptr = &KernelStack[_top] + KERNEL_STACK_SIZE - sizeof(TrapContext);
-        reg_t user_sp = &UserStack[_top] + USER_STACK_SIZE;
-        reg_t sstatus = r_sstatus();
-        // 设置 sstatus 寄存器第8位即SPP位为0 表示为U模式
-        sstatus &= (0U << 8);
-        w_sstatus(sstatus);
-        /* 设置用户程序内核栈 ，填充用户栈指针*/
-        cx_ptr->sepc = (reg_t)task_entry;
-        cx_ptr->sstatus = sstatus; 
-        cx_ptr->sp = user_sp;
-
-       /* 构造每个任务任务控制块中的任务上下文，设置 ra 寄存器为 __restore 的入口地址*/
-        tasks[_top].task_context = tcx_init((reg_t)cx_ptr);
-        // 初始化 TaskStatus 字段为 Ready
-        tasks[_top].task_state = Ready;
-
-        _top++;
-
-    }
+  struct TaskControlBlock *p;
+  
+  for(p = tasks; p < &tasks[MAX_TASKS]; p++) {
+    char *pa = (char*)phys_addr_from_phys_page_num(kalloc()).value;
+    if(pa == 0)
+      panic("kalloc");
+    u64 va = KSTACK((int) (p - tasks));
+    PageTable_map(kpgtbl, virt_addr_from_size_t(va + PAGE_SIZE), phys_addr_from_size_t((u64)pa), \
+                  PAGE_SIZE, PTE_R | PTE_W);
+    // 给应用内核栈赋值 
+    p->kstack = va + 2 * PAGE_SIZE;
+  }
 }
 
 
+/* 为每个应用程序分配一页内存用与存放trap，同时初始化任务上下文 */
+void proc_trap(struct TaskControlBlock *p)
+{
+  // 为每个程序分配一页trap物理内存
+  p->trap_cx_ppn = phys_addr_from_phys_page_num(kalloc()).value;
+  printk("trap value : %p\n",p->trap_cx_ppn);
+  // 初始化任务上下文全部为0
+  memset(&p->task_context, 0 ,sizeof(p->task_context));
+}
+
+extern char trampoline[];
+/* 为用户程序创建页表，映射跳板页和trap上下文页*/
+void proc_pagetable(struct TaskControlBlock *p)
+{
+  // 创建一个空的用户的页表，分配一页内存
+  PageTable pagetable;
+  pagetable.root_ppn = kalloc();
+  
+  //映射跳板页
+  PageTable_map(&pagetable,virt_addr_from_size_t(TRAMPOLINE),phys_addr_from_size_t((u64)trampoline),\
+                PAGE_SIZE , PTE_R | PTE_X);
+  printk("finish user TRAMPOLINE map!\n");
+  //映射用户程序的trap页
+  PageTable_map(&pagetable,virt_addr_from_size_t(TRAPFRAME),phys_addr_from_size_t(p->trap_cx_ppn), \
+                PAGE_SIZE, PTE_R | PTE_W );
+  printk("finish user TRAPFRAME map!\n");
+  p->pagetable = pagetable;
+  printk("p->pagetable:%p\n",p->pagetable.root_ppn.value);
+}
+
+TaskControlBlock* task_create_pt(size_t app_id)
+{
+  if(_top < MAX_TASKS)
+  {
+
+    //为应用程序分配一页内存用与存放trap
+    proc_trap(&tasks[app_id]);
+    //为应用程序创建页表
+    proc_pagetable(&tasks[app_id]); 
+    _top++;
+  }
+  
+  return &tasks[app_id];
+}
+
+extern u64 kernel_satp;
+void app_init(size_t app_id)
+{
+    TrapContext* cx_ptr = tasks[app_id].trap_cx_ppn;
+    reg_t sstatus = r_sstatus();
+    // 设置 sstatus 寄存器第8位即SPP位为0 表示为U模式
+    sstatus &= (0U << 8);
+    w_sstatus(sstatus);
+    // 设置程序入口地址
+    cx_ptr->sepc = tasks[app_id].entry;
+    printk("cx_ptr->sepc:%p\n",cx_ptr->sepc);
+    // 
+    cx_ptr->sstatus = sstatus; 
+    // 设置用户栈虚拟地址
+    cx_ptr->sp = tasks[app_id].ustack;
+    printk("cx_ptr->sp:%p\n",cx_ptr->sp);
+    // 设置内核页表token
+    cx_ptr->kernel_satp = kernel_satp;
+    // 设置内核栈虚拟地址
+    cx_ptr->kernel_sp = tasks[app_id].kstack;
+    printk("cx_ptr->kernel_sp:%p\n",cx_ptr->kernel_sp);
+    // 设置内核trap_handler的地址
+    cx_ptr->trap_handler = (u64)trap_handler;
+    printk("cx_ptr->trap_handler:%p\n",cx_ptr->trap_handler);
+
+    /* 构造每个任务任务控制块中的任务上下文，设置 ra 寄存器为 trap_return 的入口地址*/
+    tasks[app_id].task_context = tcx_init((reg_t)cx_ptr);
+    // 初始化 TaskStatus 字段为 Ready
+    tasks[app_id].task_state = Ready;
+}
+
+/* 返回当前执行的应用程序的trap上下文的地址 */
+u64 get_current_trap_cx()
+{
+  return tasks[_current].trap_cx_ppn;
+}
+/* 返回当前执行的应用程序的satp token*/
+u64 current_user_token()
+{
+   return MAKE_SATP(tasks[_current].pagetable.root_ppn.value);
+}
 void schedule()
 {
 	if (_top <= 0) {
@@ -91,7 +167,7 @@ void run_first_task()
     tasks[0].task_state = Running;
     struct TaskContext *next_task_cx_ptr = &(tasks[0].task_context);
     struct TaskContext _unused ;
-
+    printk("tasks[0].task_context:%p\n",tasks[0].task_context.ra);
     __switch(&_unused,next_task_cx_ptr);
     panic("unreachable in run_first_task!");
 }

@@ -20,17 +20,8 @@ uint64_t sys_write(size_t fd, const char* buf, size_t len)
     return syscall(__NR_write,fd,buf, len);
 }
 
-uint64_t sys_yield()
-{
-    return syscall(__NR_sched_yield,0,0,0);
-}
 
-uint64_t sys_gettime()
-{
-    return syscall(__NR_gettimeofday,0,0,0);
-}
-
-int main(int argc, char const *argv[])
+int main()
 {
 
     const char *message = "task1 is running!\n";

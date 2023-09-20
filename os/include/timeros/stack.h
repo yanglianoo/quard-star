@@ -1,7 +1,7 @@
 #ifndef TOS_STACK_H__
 #define TOS_STACK_H__
 
-#include "os.h"
+#include <timeros/os.h>
 
 #define MAX_SIZE 10000
 

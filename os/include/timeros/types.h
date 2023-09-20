@@ -9,6 +9,8 @@ typedef unsigned long size_t;
 typedef unsigned long long uint64_t;
 
 typedef uint64_t u64;
+typedef uint16_t u16;
+typedef uint32_t u32;
 typedef uint8_t u8;
 
 typedef unsigned long int uintptr_t;

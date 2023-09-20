@@ -22,10 +22,10 @@ SRCS_C = \
 	syscall.c \
 	string.c \
 	app.c \
-	task.c \
 	timer.c \
 	stack.c \
 	address.c \
+	task.c \
 	assert.c \
 	vsprintf.c \
 	printf.c \

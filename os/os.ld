@@ -9,19 +9,30 @@ SECTIONS
 {
     skernel = .;   /* 定义内核起始内存地址 */
 	.text : {
+        *(.text.entry)
+        . = ALIGN(4K);
+        trampoline = .;
+        *(.text.trampoline);
+        . = ALIGN(4K);
+		_strampoline = .;
 		*(.text .text.*)
-	. = ALIGN(0x1000);
-    PROVIDE(etext = .);
+		. = ALIGN(4K);
+		PROVIDE(etext = .);
 	} >ram
+
+
 
 	.rodata : {
 		*(.rodata .rodata.*)
+		. = ALIGN(4K);
 	} >ram
 
+
+	
 	.data : {
-		. = ALIGN(4096);
 		*(.sdata .sdata.*)
 		*(.data .data.*)
+		. = ALIGN(4K);
 		PROVIDE(_data_end = .);
 	} >ram
 
@@ -29,7 +40,10 @@ SECTIONS
 		*(.sbss .sbss.*)
 		*(.bss .bss.*)
 		*(COMMON)
+		. = ALIGN(4K);
 	} >ram
+	
+
 
 	PROVIDE(kernelend = .);
 }

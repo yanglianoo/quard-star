@@ -12,7 +12,17 @@ typedef struct {
     uint64_t size;
 } AppMetadata;
 
+typedef struct 
+{
+    u64 entry;  //程序入口地址
+    
+
+
+} proc_t;
+
 // 获取加载的app数量
 size_t get_num_app();
 AppMetadata  get_app_data(size_t app_id);
+void load_app(size_t app_id);
+
 #endif

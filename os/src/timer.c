@@ -1,6 +1,6 @@
 #include <timeros/os.h>
 #define CLOCK_FREQ 10000000 
-#define TICKS_PER_SEC 500
+#define TICKS_PER_SEC 100
 
 
 /* 设置下次时钟中断的cnt值 */
@@ -26,5 +26,6 @@ void timer_init()
 uint64_t get_time_us()
 {
     reg_t time =  r_mtime() / (CLOCK_FREQ / TICKS_PER_SEC);
+    printk("time:%x\n",time);
     return time;
 }

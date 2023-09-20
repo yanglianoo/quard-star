@@ -1,4 +1,4 @@
 set disassemble-next-line on
-b kvminithart
+b trap_return
 target remote : 1234
 c

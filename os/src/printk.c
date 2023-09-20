@@ -1,5 +1,4 @@
 #include <timeros/os.h>
-#include <timeros/stdio.h>
 void uart_puts(char *s)
 {
 	while (*s) {

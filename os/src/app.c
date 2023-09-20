@@ -1,6 +1,4 @@
 #include <timeros/os.h>
-#include <timeros/syscall.h>
-#include <timeros/stdio.h>
 uint64_t syscall(size_t id, reg_t arg1, reg_t arg2, reg_t arg3) {
 
     register uintptr_t a0 asm ("a0") = (uintptr_t)(arg1);
@@ -69,9 +67,9 @@ void task3()
 }
 
 
-void task_init(void)
-{
-	task_create(task1);
-	task_create(task2);
-    task_create(task3);
-}
+// void task_init(void)
+// {
+// 	task_create(task1);
+// 	task_create(task2);
+//     task_create(task3);
+// }

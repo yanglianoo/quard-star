@@ -1,6 +1,5 @@
-#include <timeros/os.h>
+#include <timeros/types.h>
 #include <timeros/syscall.h>
-#include <timeros/stdio.h>
 
 
 uint64_t syscall(size_t id, reg_t arg1, reg_t arg2, reg_t arg3) {
@@ -22,12 +21,16 @@ uint64_t sys_gettime()
     return syscall(__NR_gettimeofday,0,0,0);
 }
 
-int main(int argc, char const *argv[])
+int main()
 {
     uint64_t current_timer = 0;
+    int a = 1;
+    int b = a *a + a ;
     while (1)
     {
-       current_timer = sys_gettime();
+        current_timer = sys_gettime();
     }
+    
+    
     return 0;
 }

@@ -268,7 +268,7 @@ PhysPageNum kalloc(void)
 PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
 {
     // 拿到虚拟页号的三级索引，保存到idx数组中
-    size_t* idx;
+    size_t idx[3];
     indexes(vpn, idx); 
     //根节点
     PhysPageNum ppn = pt->root_ppn;
@@ -368,7 +368,6 @@ void kvminithart()
   // flush stale entries from the TLB.
   sfence_vma();
   reg_t satp = r_satp();
-  printk("satp:%lx\n",satp);
 }
 
 

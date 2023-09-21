@@ -28,7 +28,6 @@ void trap_handler()
 		{
 		/* rtc 中断*/
 		case 5:
-			printk("debug timer\n");
 			set_next_trigger();
 			schedule();
 			break;
@@ -84,11 +83,5 @@ void trap_return()
   
 }
 
-void trap_init()
-{
-	/*
-	 * 设置 trap 时调用函数的基地址
-	 */
-	w_stvec((reg_t)trap_handler);
-}
+
 

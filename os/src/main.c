@@ -12,7 +12,8 @@ void os_main()
 
    load_app(0);
    app_init(0);
-
+   load_app(1);
+   app_init(1);
    //映射内核
    kvminithart();
 
@@ -20,9 +21,8 @@ void os_main()
    set_kernel_trap_entry();
 
    
-   // task_init();
 
-   timer_init();
+    timer_init();
 
    
    run_first_task();

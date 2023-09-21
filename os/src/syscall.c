@@ -1,10 +1,36 @@
 #include <timeros/os.h>
 #include <timeros/stdio.h>
+#include <timeros/address.h>
+
+void translated_byte_buffer(const char* data , size_t len)
+{
+    u64  user_satp = current_user_token();  
+    PageTable  pt ;
+    pt.root_ppn.value = MAKE_PAGETABLE(user_satp);
+
+    u64 start_va = data;
+    u64 end_va = start_va + len;
+    VirtPageNum vpn = floor_virts(virt_addr_from_size_t(start_va));
+    PageTableEntry* pte = find_pte(&pt , vpn);
+    
+    //拿到物理页地址
+    int mask = ~( (1 << 10) -1 );
+    u64 phyaddr = ( pte->bits & mask) << 2 ;
+    //拿到偏移地址
+    u64 page_offset = start_va & 0xFFF;
+
+    char *data_s;
+    memcpy(data_s , phyaddr + page_offset , len );
+    printk("%s",data_s);
+     
+}
 void __sys_write(size_t fd, const char* data, size_t len)
 {
+
     if(fd == stdout || fd == stderr)
     {
-        printk(data);
+        //printk(" ");
+        translated_byte_buffer(data,len);
     }
     else
     {

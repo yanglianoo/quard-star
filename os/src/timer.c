@@ -26,6 +26,6 @@ void timer_init()
 uint64_t get_time_us()
 {
     reg_t time =  r_mtime() / (CLOCK_FREQ / TICKS_PER_SEC);
-    printk("time:%x\n",time);
+   // printk("time:%x\n",time);
     return time;
 }

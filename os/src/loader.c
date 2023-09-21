@@ -72,15 +72,18 @@ void load_app(size_t app_id)
             u8 map_perm = PTE_U | flags_to_mmap_prot(phdr->p_flags);
             // 获取映射内存大小,需要向上对齐
             u64 map_size = PGROUNDUP(phdr->p_memsz);
-            // 分配物理内存，加载程序段，然后映射
-            PhysPageNum ppn = kalloc();
-                //获取到分配的物理内存的地址
-            u64 paddr = phys_addr_from_phys_page_num(ppn).value;
-            memcpy(paddr, metadata.start + phdr->p_offset, map_size);
-            printk("proc->pagetable.value:%p\n",proc->pagetable.root_ppn.value);
-                //内存逻辑段内存映射
-            PageTable_map(&proc->pagetable,virt_addr_from_size_t(start_va), \
-                              phys_addr_from_size_t(paddr), map_size , map_perm);
+            for (size_t j = 0; j < map_size; j+= PAGE_SIZE)
+            {
+                // 分配物理内存，加载程序段，然后映射
+                PhysPageNum ppn = kalloc();
+                    //获取到分配的物理内存的地址
+                u64 paddr = phys_addr_from_phys_page_num(ppn).value;
+                memcpy(paddr, metadata.start + phdr->p_offset + j, PAGE_SIZE);
+                    //内存逻辑段内存映射
+                PageTable_map(&proc->pagetable,virt_addr_from_size_t(start_va + j), \
+                                phys_addr_from_size_t(paddr), PAGE_SIZE , map_perm);
+            }
+        
             
         }
     }

@@ -167,7 +167,6 @@ void run_first_task()
     tasks[0].task_state = Running;
     struct TaskContext *next_task_cx_ptr = &(tasks[0].task_context);
     struct TaskContext _unused ;
-    printk("tasks[0].task_context:%p\n",tasks[0].task_context.ra);
     __switch(&_unused,next_task_cx_ptr);
     panic("unreachable in run_first_task!");
 }

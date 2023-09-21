@@ -29,7 +29,7 @@
 //Sv39 分页机制
 #define SATP_SV39 (8L << 60)
 #define MAKE_SATP(pagetable) (SATP_SV39 | (((u64)pagetable)))
-
+#define MAKE_PAGETABLE(satp) ( satp & (SATP_SV39 - 1) )
 //Trap页开始位置
 #define TRAPFRAME (TRAMPOLINE - PAGE_SIZE)
 
@@ -91,5 +91,5 @@ VirtAddr virt_addr_from_size_t(uint64_t v);
 PhysAddr phys_addr_from_size_t(uint64_t v);
 PhysAddr phys_addr_from_phys_page_num(PhysPageNum ppn);
 VirtPageNum virt_page_num_from_virt_addr(VirtAddr virt_addr);
-
+VirtPageNum floor_virts(VirtAddr virt_addr);
 #endif

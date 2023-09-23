@@ -20,11 +20,8 @@ void os_main()
    //trap初始化
    set_kernel_trap_entry();
 
-   
+   timer_init();
 
-    timer_init();
-
-   
    run_first_task();
 
 }

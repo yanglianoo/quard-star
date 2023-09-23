@@ -18,11 +18,9 @@ void translated_byte_buffer(const char* data , size_t len)
     u64 phyaddr = ( pte->bits & mask) << 2 ;
     //拿到偏移地址
     u64 page_offset = start_va & 0xFFF;
-
-    char *data_s;
-    memcpy(data_s , phyaddr + page_offset , len );
-    printk("%s",data_s);
-     
+    u64 data_d = phyaddr + page_offset;
+    char *data_p = (char*) data_d;
+    printk("%s",data_p); 
 }
 void __sys_write(size_t fd, const char* data, size_t len)
 {

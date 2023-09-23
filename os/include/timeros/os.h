@@ -7,7 +7,6 @@
 #include <timeros/address.h>
 #include <timeros/assert.h>
 #include <timeros/context.h>
-#include <timeros/eldef.h>
 #include <timeros/loader.h>
 #include <timeros/memory.h>
 #include <timeros/riscv.h>

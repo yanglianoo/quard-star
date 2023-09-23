@@ -206,8 +206,6 @@ void frame_alloctor_init()
     StackFrameAllocator_init(&FrameAllocatorImpl, \
             ceil_phys(phys_addr_from_size_t(kernelend)), \
             ceil_phys(phys_addr_from_size_t(PHYSTOP)));
-    printk("Memoery start:%p\n",kernelend);
-    printk("Memoery end:%p\n",PHYSTOP);
 }
 
 
@@ -329,25 +327,19 @@ PageTable kvmmake(void)
     PageTable pt;
     PhysPageNum root_ppn =  kalloc();
     pt.root_ppn = root_ppn;
-    printk("root_ppn:%p\n",phys_addr_from_phys_page_num(root_ppn));
 
-    printk("etext:%p\n",(u64)etext);
     // map kernel text executable and read-only.
     PageTable_map(&pt,virt_addr_from_size_t(KERNBASE),phys_addr_from_size_t(KERNBASE), \
                     (u64)etext-KERNBASE , PTE_R | PTE_X ) ;
-    printk("finish kernel text map!\n");
     // map kernel data and the physical RAM we'll make use of. 
     PageTable_map(&pt,virt_addr_from_size_t((u64)etext),phys_addr_from_size_t((u64)etext ), \
                     PHYSTOP - (u64)etext , PTE_R | PTE_W ) ;
-    printk("finish kernel data and physical RAM map!\n");
     // map the trampoline for trap entry/exit to the highest virtual address in the kernel.
     PageTable_map(&pt, virt_addr_from_size_t(TRAMPOLINE), phys_addr_from_size_t((u64)trampoline), \
                     PAGE_SIZE, PTE_R | PTE_X );
-    printk("finish TRAMPOLINE Page map!\n");
 
     //allocate and map a kernel stack for each process.
     proc_mapstacks(&pt);
-    printk("finish kernel stack map!\n");
     
     return pt;
 }

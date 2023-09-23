@@ -1,5 +1,4 @@
 #include <timeros/loader.h>
-#include <timeros/eldef.h>
 #include <timeros/address.h>
 extern u64 _num_app[];
 
@@ -33,6 +32,7 @@ static u8 flags_to_mmap_prot(u8 flags)
 }
 
 void load_app(size_t app_id)
+
 {
     //加载ELF文件
     AppMetadata metadata = get_app_data(app_id + 1);

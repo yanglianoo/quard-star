@@ -28,3 +28,15 @@ uint64_t sys_gettime()
     return syscall(__NR_gettimeofday,0,0,0);
 }
 
+int sys_read(size_t fd ,const char* buf , size_t len)
+{
+    return syscall(__NR_read,fd,buf, len);
+}
+
+/* 获取一个字符 */
+char getchar()
+{
+    char data[1];
+    sys_read(stdin,data,1);
+    return data[0];
+}

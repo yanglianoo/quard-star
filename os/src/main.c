@@ -1,5 +1,5 @@
 #include <timeros/os.h>
-
+extern int sbi_console_getchar(void);
 void os_main()
 {
    printk("hello timer os!\n");
@@ -19,6 +19,18 @@ void os_main()
 
    //trap初始化
    set_kernel_trap_entry();
+
+   // while (1)
+   // {
+   //       int str =  sbi_console_getchar();
+   //       if(str != -1)
+   //       {
+   //          printk("%c",str);
+   //       }
+
+   // }
+   
+
 
    timer_init();
 

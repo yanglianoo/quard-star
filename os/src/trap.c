@@ -50,7 +50,6 @@ void trap_handler()
 			break;
 		}
 	}
-
 	trap_return();
 }
 
@@ -62,13 +61,8 @@ void trap_return()
     u64 trap_cx_ptr = TRAPFRAME;  
     /* 要继续执行的应用地址空间的 token */  
     u64  user_satp = current_user_token();  
-  
+	/* 计算_restore函数的虚拟地址 */
     u64  restore_va = (u64)__restore - (u64)__alltraps + TRAMPOLINE;  
-  
-	// printk("trap_cx_ptr:%p\n",trap_cx_ptr);
-	// printk("user_satp:%p\n",user_satp);
-	// printk("restore_va:%p\n",restore_va);
-	
 	asm volatile (    
 			"fence.i\n\t"    
 			"mv a0, %0\n\t"  // 将trap_cx_ptr传递给a0寄存器  

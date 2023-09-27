@@ -32,6 +32,10 @@ void app_init(size_t app_id);
 u64 get_current_trap_cx();
 /*返回当前执行的应用程序的satp token*/
 u64 current_user_token();
+/* 任务调度*/
+void schedule();
+/* 启动第一个任务*/
+void run_first_task();
 #endif
 
 

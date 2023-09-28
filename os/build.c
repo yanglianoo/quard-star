@@ -67,6 +67,12 @@ void insert_app_data() {
     }
     fprintf(f, "\n.quad app_%d_end", app_count - 1);
 
+    fprintf(f,"\n.global _app_names\n_app_names:");
+    for (int i = 0; i < app_count; i++) 
+    {
+        fprintf(f,"\n.string \"%s\"",apps[i]);
+    }
+    
     for (int i = 0; i < app_count; i++) {
         printf("app_%d: %s\n", i, apps[i]);
         fprintf(f, "\n.section .data\n.global app_%d_start\n.global app_%d_end\n.align 3\napp_%d_start:\n.incbin \"%s%s\"\napp_%d_end:", i, i, i, TARGET_PATH, apps[i], i);

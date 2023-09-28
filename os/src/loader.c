@@ -1,13 +1,15 @@
 #include <timeros/loader.h>
 #include <timeros/address.h>
 extern u64 _num_app[];
-
+extern char _app_names[];
+static char* app_names[MAX_TASKS];
 // 获取加载的app数量
 size_t get_num_app()
 {
     return _num_app[0];
 }
 
+/* 根据app id加载app的数据*/
 AppMetadata  get_app_data(size_t app_id)
 {
     AppMetadata metadata;
@@ -23,6 +25,29 @@ AppMetadata  get_app_data(size_t app_id)
     return metadata;
 }
 
+void get_app_names()
+{
+    int app_num = get_num_app();
+    printk("/**** APPS ****\n");
+    for (size_t i = 0; i < app_num; i++)
+    {
+        if(i==0)
+        {
+            size_t len = strlen(_app_names);
+            app_names[0] = _app_names;
+        }
+        else
+        {
+            size_t len = strlen(app_names[i-1]);
+            app_names[i] = (char*)((u64)_app_names + i * len + 1);
+        }
+
+        printk("%s\n",app_names[i]);
+        
+    }
+    printk("**************/");
+    
+}
 
 static u8 flags_to_mmap_prot(u8 flags)
 {

@@ -2,6 +2,9 @@
 #define TOS_TASK_H__
 
 #include <timeros/os.h>
+
+#define MAX_TASKS 10
+
 typedef enum TaskState
 {
 	UnInit, // 未初始化
@@ -13,6 +16,8 @@ typedef enum TaskState
 typedef struct TaskControlBlock
 {
     TaskState task_state;       //任务状态
+    int pid;                    // Process ID
+    TaskControlBlock* parent;  //Parent process
     TaskContext task_context;   //任务上下文
     u64 trap_cx_ppn;            //Trap 上下文所在物理地址
     u64  base_size;             //应用数据大小

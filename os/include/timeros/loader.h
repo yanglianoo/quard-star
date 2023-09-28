@@ -68,5 +68,5 @@ typedef struct {
 size_t get_num_app();
 AppMetadata  get_app_data(size_t app_id);
 void load_app(size_t app_id);
-
+void get_app_names();
 #endif

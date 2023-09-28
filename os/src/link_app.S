@@ -7,6 +7,10 @@ _num_app:
 .quad app_0_start
 .quad app_1_start
 .quad app_1_end
+.global _app_names
+_app_names:
+.string "time"
+.string "write"
 .section .data
 .global app_0_start
 .global app_0_end

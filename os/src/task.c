@@ -1,14 +1,9 @@
 #include <timeros/os.h>
 
-#define USER_STACK_SIZE (4096 * 2)
-#define KERNEL_STACK_SIZE (4096 * 2)
-
-#define MAX_TASKS 10
 static int _current = 0;
 static int _top = 0;
 
-uint8_t KernelStack[MAX_TASKS][KERNEL_STACK_SIZE];
-uint8_t UserStack[MAX_TASKS][USER_STACK_SIZE];
+
 
 struct TaskControlBlock tasks[MAX_TASKS];
 
@@ -45,10 +40,10 @@ void proc_mapstacks(PageTable* kpgtbl)
     if(pa == 0)
       panic("kalloc");
     u64 va = KSTACK((int) (p - tasks));
-    PageTable_map(kpgtbl, virt_addr_from_size_t(va + PAGE_SIZE), phys_addr_from_size_t((u64)pa), \
+    PageTable_map(kpgtbl, virt_addr_from_size_t(va ), phys_addr_from_size_t((u64)pa), \
                   PAGE_SIZE, PTE_R | PTE_W);
     // 给应用内核栈赋值 
-    p->kstack = va + 2 * PAGE_SIZE;
+    p->kstack = va +  PAGE_SIZE;
   }
 }
 

@@ -275,12 +275,12 @@ PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
     {
         //拿到具体的页表项
         PageTableEntry* pte =  &get_pte_array(ppn)[idx[i]];
+        //如果此项页表为空
+        if (!PageTableEntry_is_valid(pte)) {
+            return NULL;
+        }
             if (i == 2) {
                 return pte;
-            }
-        //如果此项页表为空
-            if (!PageTableEntry_is_valid(pte)) {
-                return NULL;
             }
         //取出进入下级页表的物理页号
         ppn = PageTableEntry_ppn(pte);
@@ -311,6 +311,40 @@ void PageTable_map(PageTable* pt,VirtAddr va, PhysAddr pa, u64 size ,uint8_t pte
     }
 }
 
+
+int uvmcopy(PageTable* old, PageTable* new, u64 sz)
+{
+    PageTableEntry* pte;
+    u64 pa, i;
+    u8 flags;
+
+    for (i = 0; i < sz; i+=PAGE_SIZE)
+    {
+        VirtPageNum vpn = floor_virts(virt_addr_from_size_t(i));
+        pte = find_pte(old,vpn);
+
+        if (pte != 0)
+        {
+            /* 将PTE 转换为物理地址*/
+            u64 phyaddr = PTE2PA(pte->bits);
+            /* 得到PTE的映射 flags */
+            flags = PTE_FLAGS(pte->bits);
+            /* 分配一页内存 */
+            PhysPageNum ppn = kalloc();
+            u64 paddr = phys_addr_from_phys_page_num(ppn).value;
+            /* 拷贝内存 */
+            memcpy((void*)paddr,(void*)phyaddr,PAGE_SIZE);
+
+            printk("vaddr:%x\n",i);
+            /* 映射内存 */
+            PageTable_map(new,virt_addr_from_size_t(i), \
+                              phys_addr_from_size_t(paddr),PAGE_SIZE,flags);
+
+        }
+        
+    }
+    
+}
 /* 取消映射的函数先不管 */
 void PageTable_unmap(PageTable* pt, VirtPageNum vpn)
 {

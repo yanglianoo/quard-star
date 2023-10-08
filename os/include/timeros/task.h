@@ -17,9 +17,9 @@ typedef struct TaskControlBlock
 {
     TaskState task_state;       //任务状态
     int pid;                    // Process ID
-    TaskControlBlock* parent;  //Parent process
+    struct TaskControlBlock* parent;  //Parent process
     TaskContext task_context;   //任务上下文
-    u64 trap_cx_ppn;            //Trap 上下文所在物理地址
+    u64  trap_cx_ppn;            //Trap 上下文所在物理地址
     u64  base_size;             //应用数据大小
     u64  kstack;                //应用内核栈的虚拟地址
     u64  ustack;                //应用用户栈的虚拟地址

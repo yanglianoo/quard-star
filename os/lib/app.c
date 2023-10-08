@@ -33,6 +33,10 @@ int sys_read(size_t fd ,const char* buf , size_t len)
     return syscall(__NR_read,fd,buf, len);
 }
 
+int sys_fork()
+{
+    return syscall(__NR_clone,0,0,0);
+}
 /* 获取一个字符 */
 char getchar()
 {

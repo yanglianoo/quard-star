@@ -42,8 +42,8 @@ void trap_handler()
 		{
 		/* U模式下的syscall */
 		case 8:
-			cx->a0 = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
 			cx->sepc += 8;
+			cx->a0 = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
 			break;
 		default:
 			printk("undfined exception scause:%x\n",scause);

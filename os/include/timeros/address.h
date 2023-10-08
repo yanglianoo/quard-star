@@ -36,6 +36,11 @@
 
 #define PGROUNDUP(sz)  (((sz)+PAGE_SIZE-1) & ~(PAGE_SIZE-1))
 #define PGROUNDDOWN(a) (((a)) & ~(PAGE_SIZE-1))
+
+
+#define PTE2PA(pte) (((pte) >> 10) << 12)
+#define PTE_FLAGS(pte) ((pte) & 0x3FF)
+
 /* 物理地址 */
 typedef struct {
     uint64_t value; 
@@ -92,4 +97,5 @@ PhysAddr phys_addr_from_size_t(uint64_t v);
 PhysAddr phys_addr_from_phys_page_num(PhysPageNum ppn);
 VirtPageNum virt_page_num_from_virt_addr(VirtAddr virt_addr);
 VirtPageNum floor_virts(VirtAddr virt_addr);
+int uvmcopy(PageTable* old, PageTable* new, u64 sz);
 #endif

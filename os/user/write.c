@@ -3,11 +3,12 @@
 #include <timeros/string.h>
 int main()
 {
-
+    int pid = sys_fork();
     while (1)
     {
-        char data = getchar();
-        printf("%c",data);
+        printf("pid:%d\n",pid);
+        // char data = getchar();
+        //printf("write:%d\n",4);
     }
     return 0;
 }

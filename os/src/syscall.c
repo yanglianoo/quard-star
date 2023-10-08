@@ -14,8 +14,9 @@ char * translated_byte_buffer(const char* data , size_t len)
     PageTableEntry* pte = find_pte(&pt , vpn);
     
     //拿到物理页地址
-    int mask = ~( (1 << 10) -1 );
-    u64 phyaddr = ( pte->bits & mask) << 2 ;
+    // int mask = ~( (1 << 10) -1 );
+    // u64 phyaddr = ( pte->bits & mask) << 2 ;
+    u64 phyaddr = PTE2PA(pte->bits);
     //拿到偏移地址
     u64 page_offset = start_va & 0xFFF;
     u64 data_d = phyaddr + page_offset;
@@ -63,6 +64,9 @@ uint64_t __sys_gettime()
     return get_time_us();
 }
 
+
+
+
 uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3) {
         switch (syscall_id)
         {
@@ -77,6 +81,8 @@ uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3) {
             break;
         case __NR_gettimeofday:
             return __sys_gettime();
+        case __NR_clone:
+            return __sys_fork();
         default:
             printk("Unsupported syscall id:%d\n",syscall_id);
             break;

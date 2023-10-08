@@ -12,12 +12,13 @@ void set_next_trigger()
 /* 开启S模式下的时钟中断 */
 void timer_init()
 {
-   reg_t sstatus =r_sstatus();
-   sstatus |= (1L << 1) ;
-   w_sstatus(sstatus);
+   //开启S模式下的中断
+   intr_on();
+   //开启时钟中断
    reg_t sie = r_sie();
    sie |= SIE_STIE;
    w_sie(sie);
+   //
    set_next_trigger();
 }
 

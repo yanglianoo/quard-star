@@ -2,10 +2,9 @@
 .globl __alltraps
 .align 3
 __alltraps:
-    # 从sscratch获取S模式下的SP，把U模式下的SP保存到sscratch寄存器中
+    # 从sscratch获取trap页的地址，把U模式下的SP保存到sscratch寄存器中
     csrrw sp, sscratch, sp
-    # now sp->kernel stack, sscratch->user stack
-    # allocate a TrapContext on kernel stack
+    # now sp->*TrapContext in user space, sscratch->user stack
     # save general-purpose registers
     sd x1, 1*8(sp)
     # skip sp(x2), we will save it later

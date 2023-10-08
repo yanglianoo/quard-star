@@ -3,6 +3,7 @@
 static int _current = 0;
 static int _top = 0;
 
+int nextpid = 1;
 
 
 struct TaskControlBlock tasks[MAX_TASKS];
@@ -29,6 +30,14 @@ struct TaskContext tcx_init(reg_t kstack_ptr) {
     return task_ctx;
 }
 
+void procinit()
+{
+  struct TaskControlBlock *p;
+  for(p = tasks; p < &tasks[MAX_TASKS]; p++)
+  {
+    p->task_state = UnInit;
+  }
+}
 
 /* 为每个应用程序映射内核栈,内核空间以及进行了映射 */
 void proc_mapstacks(PageTable* kpgtbl)
@@ -111,9 +120,11 @@ void app_init(size_t app_id)
     cx_ptr->trap_handler = (u64)trap_handler;
 
     /* 构造每个任务任务控制块中的任务上下文，设置 ra 寄存器为 trap_return 的入口地址*/
-    tasks[app_id].task_context = tcx_init((reg_t)cx_ptr);
+    tasks[app_id].task_context = tcx_init((reg_t)tasks[app_id].kstack);
     // 初始化 TaskStatus 字段为 Ready
     tasks[app_id].task_state = Ready;
+    /* 分配pid值 */
+    tasks[app_id].pid = allocpid();
 }
 
 /* 返回当前执行的应用程序的trap上下文的地址 */
@@ -157,3 +168,70 @@ void run_first_task()
     __switch(&_unused,next_task_cx_ptr);
     panic("unreachable in run_first_task!");
 }
+
+struct TaskControlBlock* current_proc()
+{
+  return &tasks[_current];
+}
+
+int allocpid()
+{
+  int pid;
+  pid = nextpid;
+  nextpid = nextpid + 1;
+  return pid;
+}
+
+struct TaskControlBlock* allocproc()
+{
+  struct TaskControlBlock* p;
+  for(p = tasks; p < &tasks[MAX_TASKS]; p++)
+  {
+    if(p->task_state == UnInit)
+    {
+      goto found;
+    }
+  }
+  return 0;
+
+found:
+      p->pid = allocpid();
+      p->task_state = Ready;
+      // 为每个应用程序分配一页内存用与存放trap，同时初始化任务上下文
+      proc_trap(p);
+      // 为用户程序创建页表，映射跳板页和trap上下文页
+      proc_pagetable(p);
+  return p;
+}
+
+int __sys_fork()
+{
+  struct TaskControlBlock* np;
+  struct TaskControlBlock* p = current_proc();
+  // Allocate process.
+  if((np = allocproc()) == 0){
+    return -1;
+  }
+
+  // 拷贝父进程的内存数据，根据页表查找物理页拷贝
+  uvmcopy(&p->pagetable,&np->pagetable,p->base_size);
+
+  // 拷贝父进程的trap页数据
+  memcpy((void*)np->trap_cx_ppn,(void*)p->trap_cx_ppn,PAGE_SIZE);
+
+  // 子进程返回值为0
+  TrapContext* cx_ptr = np->trap_cx_ppn;
+  cx_ptr->a0 = 0;
+  // 复制TCB的信息
+  np->entry = p->entry;
+  np->base_size = p->base_size;
+  np->parent = p;
+  np->ustack = p->ustack;
+  // 设置子进程返回地址和内核栈
+  np->task_context.ra = trap_return;
+  np->task_context.sp = np->kstack;
+
+  _top++;
+  return np->pid;
+}
+

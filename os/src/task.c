@@ -235,3 +235,72 @@ int __sys_fork()
   return np->pid;
 }
 
+void exec(const char* name)
+{
+    char* app_name = translated_byte_buffer(name);
+
+    AppMetadata metadata = get_app_data_by_name(app_name);
+    //ELF 文件头
+    elf64_ehdr_t *ehdr = metadata.start;
+    //判断 elf 文件的魔数
+    assert(*(u32 *)ehdr==ELFMAG);
+    //判断传入文件是否为 riscv64 的
+    if (ehdr->e_machine != EM_RISCV || ehdr->e_ident[EI_CLASS] != ELFCLASS64)
+    {
+        panic("only riscv64 elf file is supported");
+    }
+    elf64_phdr_t *phdr; 
+
+    struct TaskControlBlock* proc = current_proc();
+    PageTable old_pagetable = proc->pagetable;
+    u64 oldsz = proc->base_size;
+    //重新分配页表
+    proc_pagetable(proc);
+    //遍历每一个逻辑段
+    for (size_t i = 0; i < ehdr->e_phnum; i++)
+    {
+        //拿到每个Program Header的指针
+        phdr =(u64) (ehdr->e_phoff + ehdr->e_phentsize * i + metadata.start);
+        if(phdr->p_type == PT_LOAD)
+        {
+            // 获取映射内存段开始位置
+            u64 start_va = phdr->p_vaddr;
+            // 获取映射内存段结束位置
+            proc->ustack = start_va + phdr->p_memsz;
+            //  转换elf的可读，可写，可执行的 flags
+            u8 map_perm = PTE_U | flags_to_mmap_prot(phdr->p_flags);
+            // 获取映射内存大小,需要向上对齐
+            u64 map_size = PGROUNDUP(phdr->p_memsz);
+            for (size_t j = 0; j < map_size; j+= PAGE_SIZE)
+            {
+                // 分配物理内存，加载程序段，然后映射
+                PhysPageNum ppn = kalloc();
+                    //获取到分配的物理内存的地址
+                u64 paddr = phys_addr_from_phys_page_num(ppn).value;
+                memcpy(paddr, metadata.start + phdr->p_offset + j, PAGE_SIZE);
+                    //内存逻辑段内存映射
+                PageTable_map(&proc->pagetable,virt_addr_from_size_t(start_va + j), \
+                                phys_addr_from_size_t(paddr), PAGE_SIZE , map_perm);
+                
+            }
+        
+            
+        }
+    }
+
+    // 映射应用程序用户栈开始地址
+    proc->ustack =  2 * PAGE_SIZE + PGROUNDUP(proc->ustack);
+    PhysPageNum ppn = kalloc();
+    u64 paddr = phys_addr_from_phys_page_num(ppn).value;
+    PageTable_map(&proc->pagetable,virt_addr_from_size_t(proc->ustack - PAGE_SIZE),phys_addr_from_size_t(paddr), \
+                  PAGE_SIZE, PTE_R | PTE_W | PTE_U);
+    proc->base_size=proc->ustack;
+
+
+    TrapContext* cx_ptr = proc->trap_cx_ppn;
+    cx_ptr->sepc = (u64)ehdr->e_entry;
+    cx_ptr->sp = proc->ustack;
+    uvmunmap(old_pagetable, TRAMPOLINE, 1, 0);
+    uvmunmap(old_pagetable, TRAPFRAME, 1, 0);
+    uvmfree(old_pagetable, oldsz);
+}

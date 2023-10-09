@@ -8,6 +8,8 @@ INCLUDE:=-I../include
 
 LIB = ../lib
 
+all: time write
+
 write: write.c $(LIB)/*.c
 	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -Wl,-Map=write.map -o bin/write $^
 

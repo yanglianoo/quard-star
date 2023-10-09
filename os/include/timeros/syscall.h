@@ -15,5 +15,6 @@ uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3);
 uint64_t sys_write(size_t fd, const char* buf, size_t len);
 uint64_t sys_yield();
 uint64_t sys_gettime();
+int sys_fork();
 int sys_read(size_t fd ,const char* buf , size_t len);
 char getchar();

@@ -10,6 +10,7 @@
 typedef struct {
     uint64_t start;
     uint64_t size;
+    u64 id;
 } AppMetadata;
 
 #define EI_NIDENT 16
@@ -69,4 +70,5 @@ size_t get_num_app();
 AppMetadata  get_app_data(size_t app_id);
 void load_app(size_t app_id);
 void get_app_names();
+AppMetadata get_app_data_by_name(char* path);
 #endif

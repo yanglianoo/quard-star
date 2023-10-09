@@ -37,6 +37,11 @@ int sys_fork()
 {
     return syscall(__NR_clone,0,0,0);
 }
+
+int sys_exec(char* name)
+{
+    return syscall(__NR_execve,name,0,0);
+}
 /* 获取一个字符 */
 char getchar()
 {

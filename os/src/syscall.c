@@ -2,14 +2,13 @@
 #include <timeros/stdio.h>
 #include <timeros/address.h>
 
-char * translated_byte_buffer(const char* data , size_t len)
+char * translated_byte_buffer(const char* data)
 {
     u64  user_satp = current_user_token();  
     PageTable  pt ;
     pt.root_ppn.value = MAKE_PAGETABLE(user_satp);
 
     u64 start_va = data;
-    u64 end_va = start_va + len;
     VirtPageNum vpn = floor_virts(virt_addr_from_size_t(start_va));
     PageTableEntry* pte = find_pte(&pt , vpn);
     
@@ -27,8 +26,8 @@ void __sys_write(size_t fd, const char* data, size_t len)
 
     if(fd == stdout || fd == stderr)
     {
-
-       char* str =  translated_byte_buffer(data,len);
+       if(len<=0)panic("len wrong!");
+       char* str =  translated_byte_buffer(data);
        printk("%s",str);
     }
     else
@@ -49,7 +48,7 @@ void __sys_read(size_t fd, const char* data, size_t len)
             if(c != -1)
                 break;
         }
-        char* str = translated_byte_buffer(data , len);
+        char* str = translated_byte_buffer(data);
         str[0]  = c;
     }
 }
@@ -64,7 +63,13 @@ uint64_t __sys_gettime()
     return get_time_us();
 }
 
-
+uint64_t __sys_exec(const char* name)
+{
+    char* app_name = translated_byte_buffer(name);
+    printk("exec app_name:%s\n",app_name);
+    exec(app_name);
+    return 0;
+}
 
 
 uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3) {
@@ -83,6 +88,8 @@ uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3) {
             return __sys_gettime();
         case __NR_clone:
             return __sys_fork();
+        case __NR_execve:
+            __sys_exec(arg2);
         default:
             printk("Unsupported syscall id:%d\n",syscall_id);
             break;

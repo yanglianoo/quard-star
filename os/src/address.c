@@ -6,6 +6,7 @@ PhysAddr phys_addr_from_size_t(uint64_t v) {
     return addr;
 }
 
+/* 把物理地址转换为物理页号 */
 PhysPageNum phys_page_num_from_size_t(uint64_t v) {
     PhysPageNum pageNum;
     pageNum.value = v & ((1ULL << PPN_WIDTH_SV39) - 1);
@@ -263,6 +264,11 @@ PhysPageNum kalloc(void)
     return frame;
 }
 
+void kfree(PhysPageNum ppn)
+{
+    StackFrameAllocator_dealloc(&FrameAllocatorImpl,ppn);
+}
+
 PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
 {
     // 拿到虚拟页号的三级索引，保存到idx数组中
@@ -335,7 +341,6 @@ int uvmcopy(PageTable* old, PageTable* new, u64 sz)
             /* 拷贝内存 */
             memcpy((void*)paddr,(void*)phyaddr,PAGE_SIZE);
 
-            printk("vaddr:%x\n",i);
             /* 映射内存 */
             PageTable_map(new,virt_addr_from_size_t(i), \
                               phys_addr_from_size_t(paddr),PAGE_SIZE,flags);
@@ -345,13 +350,59 @@ int uvmcopy(PageTable* old, PageTable* new, u64 sz)
     }
     
 }
-/* 取消映射的函数先不管 */
-void PageTable_unmap(PageTable* pt, VirtPageNum vpn)
+/* 取消映射 */
+void uvmunmap(PageTable* pt, VirtPageNum vpn, u64 npages, int do_free)
 {
-    PageTableEntry* pte = find_pte(pt,vpn);
-    assert(!PageTableEntry_is_valid(pte));
-    *pte = PageTableEntry_empty();
+    PageTableEntry* pte;
+    u64 a;
+    for (a = vpn.value; a < vpn.value + npages; a++)
+    {
+        pte = find_pte(pt,vpn);
+        if(pte !=0 )
+        {
+            if(do_free)
+            {
+                u64 phyaddr = PTE2PA(pte->bits);
+                PhysPageNum ppn = phys_page_num_from_size_t(phyaddr);
+                kfree(ppn);
+            }
+            *pte = PageTableEntry_empty();
+        }
+    }
+    
 }
+
+/* 解除页表映射关系，释放内存*/
+void freewalk(PhysPageNum ppn)
+{
+    for (int i = 0; i < 512; i++)
+    {
+        PageTableEntry* pte =  &get_pte_array(ppn)[i];
+        if((pte->bits & PTE_V) && (pte->bits & (PTE_R|PTE_W|PTE_X)) == 0)
+        {
+            //取出下一级页表的页号
+            PhysPageNum child_ppn = PageTableEntry_ppn(pte);
+            freewalk(child_ppn);
+            *pte = PageTableEntry_empty();
+        }
+        else if(pte->bits & PTE_V)
+        {
+            panic("freewalk: leaf");
+        }
+    }
+    kfree(ppn); 
+}
+
+void uvmfree(PageTable* pt , u64 sz)
+{
+    if(sz > 0)
+    {
+        uvmunmap(pt,virt_page_num_from_size_t(0),PGROUNDUP(sz)/PAGE_SIZE,1);
+    }
+    freewalk(pt->root_ppn);
+}
+
+
 
 extern char etext[];
 extern char trampoline[];

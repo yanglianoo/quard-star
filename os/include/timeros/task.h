@@ -41,6 +41,9 @@ u64 current_user_token();
 void schedule();
 /* 启动第一个任务*/
 void run_first_task();
+
+int __sys_fork();
+void exec(const char* name);
 #endif
 
 

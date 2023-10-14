@@ -61,6 +61,7 @@ void proc_mapstacks(PageTable* kpgtbl)
 void proc_trap(struct TaskControlBlock *p)
 {
   // 为每个程序分配一页trap物理内存
+  printk("alloc trap!\n");
   p->trap_cx_ppn = phys_addr_from_phys_page_num(kalloc()).value;
   // 初始化任务上下文全部为0
   memset(&p->task_context, 0 ,sizeof(p->task_context));
@@ -73,10 +74,11 @@ void proc_pagetable(struct TaskControlBlock *p)
   // 创建一个空的用户的页表，分配一页内存
   PageTable pagetable;
   pagetable.root_ppn = kalloc();
-  
+
   //映射跳板页
   PageTable_map(&pagetable,virt_addr_from_size_t(TRAMPOLINE),phys_addr_from_size_t((u64)trampoline),\
                 PAGE_SIZE , PTE_R | PTE_X);
+  
   //映射用户程序的trap页
   PageTable_map(&pagetable,virt_addr_from_size_t(TRAPFRAME),phys_addr_from_size_t(p->trap_cx_ppn), \
                 PAGE_SIZE, PTE_R | PTE_W );
@@ -89,7 +91,7 @@ TaskControlBlock* task_create_pt(size_t app_id)
   {
 
     //为应用程序分配一页内存用与存放trap
-    proc_trap(&tasks[app_id]);
+    proc_trap(&tasks[app_id]);   // 
     //为用户程序创建页表，映射跳板页和trap上下文页
     proc_pagetable(&tasks[app_id]); 
     _top++;
@@ -237,9 +239,8 @@ int __sys_fork()
 
 void exec(const char* name)
 {
-    char* app_name = translated_byte_buffer(name);
 
-    AppMetadata metadata = get_app_data_by_name(app_name);
+    AppMetadata metadata = get_app_data_by_name(name);
     //ELF 文件头
     elf64_ehdr_t *ehdr = metadata.start;
     //判断 elf 文件的魔数
@@ -254,9 +255,9 @@ void exec(const char* name)
     struct TaskControlBlock* proc = current_proc();
     PageTable old_pagetable = proc->pagetable;
     u64 oldsz = proc->base_size;
+    u64  user_satp = current_user_token();  
     //重新分配页表
     proc_pagetable(proc);
-    //遍历每一个逻辑段
     for (size_t i = 0; i < ehdr->e_phnum; i++)
     {
         //拿到每个Program Header的指针
@@ -300,7 +301,19 @@ void exec(const char* name)
     TrapContext* cx_ptr = proc->trap_cx_ppn;
     cx_ptr->sepc = (u64)ehdr->e_entry;
     cx_ptr->sp = proc->ustack;
-    uvmunmap(old_pagetable, TRAMPOLINE, 1, 0);
-    uvmunmap(old_pagetable, TRAPFRAME, 1, 0);
-    uvmfree(old_pagetable, oldsz);
+    reg_t sstatus = r_sstatus();
+    // 设置 sstatus 寄存器第8位即SPP位为0 表示为U模式
+    sstatus &= (0U << 8);
+    w_sstatus(sstatus);
+    cx_ptr->sstatus = sstatus; 
+    // 设置内核页表token
+    cx_ptr->kernel_satp = kernel_satp;
+    // 设置内核栈虚拟地址
+    cx_ptr->kernel_sp = proc->kstack;
+    // 设置内核trap_handler的地址
+    cx_ptr->trap_handler = (u64)trap_handler;
+    uvmunmap(&old_pagetable, floor_virts(virt_addr_from_size_t(TRAMPOLINE)), 1, 0);
+    uvmunmap(&old_pagetable, floor_virts(virt_addr_from_size_t(TRAPFRAME)), 1, 1);
+    uvmfree(&old_pagetable, oldsz);
+    user_satp = current_user_token();  
 }

@@ -130,13 +130,6 @@ PageTableEntry* get_pte_array(PhysPageNum ppn)
     return (PageTableEntry*) addr.value;
 }
 
-// void* get_mut(PhysPageNum ppn) {
-
-//     PhysAddr addr = phys_addr_from_phys_page_num(ppn);
-//     return (void*)addr.value; // Assuming addr is a valid memory address
-// }
-
-
 
 /* 内存分配器 */
 typedef struct 
@@ -227,7 +220,12 @@ void indexes(VirtPageNum vpn, size_t* result)
 }
 
 
-
+PhysPageNum kalloc(void)
+{
+    PhysPageNum frame =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
+    //printk("frame:%d\n",frame.value);
+    return frame;
+}
 
 
 PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
@@ -249,7 +247,7 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
         //如果此项页表为空
             if (!PageTableEntry_is_valid(pte)) {
                 //分配一页物理内存
-                PhysPageNum frame =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
+                PhysPageNum frame =  kalloc();
                //新建一个页表项
                *pte =  PageTableEntry_new(frame,PTE_V);
             }
@@ -258,11 +256,6 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
     }
 }
 
-PhysPageNum kalloc(void)
-{
-    PhysPageNum frame =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
-    return frame;
-}
 
 void kfree(PhysPageNum ppn)
 {
@@ -285,7 +278,7 @@ PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
         if (!PageTableEntry_is_valid(pte)) {
             return NULL;
         }
-            if (i == 2) {
+        if (i == 2) {
                 return pte;
             }
         //取出进入下级页表的物理页号
@@ -357,14 +350,20 @@ void uvmunmap(PageTable* pt, VirtPageNum vpn, u64 npages, int do_free)
     u64 a;
     for (a = vpn.value; a < vpn.value + npages; a++)
     {
-        pte = find_pte(pt,vpn);
+
+        printk("vpn.value:%d\n",vpn.value);
+        pte = find_pte(pt,virt_page_num_from_size_t(a));
+        
         if(pte !=0 )
         {
+            printk("pte->bits:%x\n",(u64)pte->bits);
             if(do_free)
             {
                 u64 phyaddr = PTE2PA(pte->bits);
-                PhysPageNum ppn = phys_page_num_from_size_t(phyaddr);
+                PhysPageNum ppn = floor_phys(phys_addr_from_size_t(phyaddr));
+                printk("ppn.value:%d\n",ppn.value);
                 kfree(ppn);
+
             }
             *pte = PageTableEntry_empty();
         }
@@ -378,18 +377,24 @@ void freewalk(PhysPageNum ppn)
     for (int i = 0; i < 512; i++)
     {
         PageTableEntry* pte =  &get_pte_array(ppn)[i];
+        //printk("i:%d ",i);
         if((pte->bits & PTE_V) && (pte->bits & (PTE_R|PTE_W|PTE_X)) == 0)
         {
             //取出下一级页表的页号
+            //printk("pte->bits:%x\n",pte->bits);
             PhysPageNum child_ppn = PageTableEntry_ppn(pte);
+            //printk("child ppn:%d\n",child_ppn.value);
             freewalk(child_ppn);
             *pte = PageTableEntry_empty();
         }
         else if(pte->bits & PTE_V)
         {
+            //printk("pte:%x\n",pte->bits);
             panic("freewalk: leaf");
         }
     }
+    printk("free ppn:%d\n",ppn.value);
+    printk("\n");
     kfree(ppn); 
 }
 
@@ -397,7 +402,7 @@ void uvmfree(PageTable* pt , u64 sz)
 {
     if(sz > 0)
     {
-        uvmunmap(pt,virt_page_num_from_size_t(0),PGROUNDUP(sz)/PAGE_SIZE,1);
+        uvmunmap(pt,floor_virts(virt_addr_from_size_t(0)),sz/PAGE_SIZE,1);
     }
     freewalk(pt->root_ppn);
 }

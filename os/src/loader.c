@@ -35,8 +35,8 @@ AppMetadata get_app_data_by_name(char* path)
     {
         if(strcmp(path,app_names[i])==0)
         {
-           metadata =  get_app_data(i);
-           printk("find app:%s\n",path);
+           metadata =  get_app_data(i+1);
+           printk("find app:%s id:%d\n",path,metadata.id);
            return metadata;
         }
     }
@@ -47,6 +47,7 @@ void get_app_names()
 {
     int app_num = get_num_app();
     printk("/**** APPS ****\n");
+    printk("num app:%d\n",app_num);
     for (size_t i = 0; i < app_num; i++)
     {
         if(i==0)
@@ -57,7 +58,7 @@ void get_app_names()
         else
         {
             size_t len = strlen(app_names[i-1]);
-            app_names[i] = (char*)((u64)_app_names + i * len + 1);
+            app_names[i] = (char*)((u64)app_names[i-1] + len + 1);
         }
 
         printk("%s\n",app_names[i]);
@@ -67,7 +68,7 @@ void get_app_names()
     
 }
 
-static u8 flags_to_mmap_prot(u8 flags)
+u8 flags_to_mmap_prot(u8 flags)
 {
     return (flags & PF_R ? PTE_R : 0) | 
            (flags & PF_W ? PTE_W : 0) |

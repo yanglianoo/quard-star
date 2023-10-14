@@ -22,9 +22,10 @@ void os_main()
 
    get_app_names();
 
+   
    //初始化时钟
    timer_init();
 
-   run_first_task();
+  run_first_task();
 
 }

@@ -96,6 +96,10 @@ VirtAddr virt_addr_from_size_t(uint64_t v);
 PhysAddr phys_addr_from_size_t(uint64_t v);
 PhysAddr phys_addr_from_phys_page_num(PhysPageNum ppn);
 VirtPageNum virt_page_num_from_virt_addr(VirtAddr virt_addr);
+VirtPageNum virt_page_num_from_size_t(uint64_t v);
 VirtPageNum floor_virts(VirtAddr virt_addr);
 int uvmcopy(PageTable* old, PageTable* new, u64 sz);
+void uvmunmap(PageTable* pt, VirtPageNum vpn, u64 npages, int do_free);
+void uvmfree(PageTable* pt , u64 sz);
+
 #endif

@@ -8,7 +8,7 @@ INCLUDE:=-I../include
 
 LIB = ../lib
 
-all: time write
+all: time write xec
 
 write: write.c $(LIB)/*.c
 	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -Wl,-Map=write.map -o bin/write $^
@@ -16,7 +16,14 @@ write: write.c $(LIB)/*.c
 time: time.c $(LIB)/*.c
 	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -Wl,-Map=time.map -o bin/time $^
 
+xec: xec.c $(LIB)/*.c
+	${CC} ${CFLAGS} $(INCLUDE) -T user.ld -o bin/xec $^
+
+objdump_app: objdump_time objdump_write objdump_xec
+
 objdump_time:
 	${OBJDUMP} -d bin/time > time.txt
 objdump_write:
 	${OBJDUMP} -d bin/write > write.txt
+objdump_xec:
+	${OBJDUMP} -d bin/xec > xec.txt

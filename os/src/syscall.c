@@ -89,7 +89,7 @@ uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3) {
         case __NR_clone:
             return __sys_fork();
         case __NR_execve:
-            __sys_exec(arg2);
+            return __sys_exec(arg2);
         default:
             printk("Unsupported syscall id:%d\n",syscall_id);
             break;

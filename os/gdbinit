@@ -1,4 +1,4 @@
 set disassemble-next-line on
-b trap_return
+b exec
 target remote : 1234
 c

@@ -40,7 +40,7 @@ int sys_fork()
 
 int sys_exec(char* name)
 {
-    return syscall(__NR_execve,name,0,0);
+    return syscall(__NR_execve,0,name,0);
 }
 /* 获取一个字符 */
 char getchar()

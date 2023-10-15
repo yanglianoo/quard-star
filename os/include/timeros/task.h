@@ -41,9 +41,12 @@ u64 current_user_token();
 void schedule();
 /* 启动第一个任务*/
 void run_first_task();
+/* 映射应用程序用户栈 */
+void proc_ustack(proc);
 
 int __sys_fork();
 void exec(const char* name);
+
 #endif
 
 

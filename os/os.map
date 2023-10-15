@@ -101,7 +101,7 @@ LOAD loader.o
                 0x0000000080202c2e                push
                 0x0000000080202c98                pop
                 0x0000000080202cf4                top
- .text          0x0000000080202d3c      0xc30 address.o
+ .text          0x0000000080202d3c      0xca2 address.o
                 0x0000000080202d82                phys_addr_from_size_t
                 0x0000000080202da6                phys_page_num_from_size_t
                 0x0000000080202dca                size_t_from_phys_addr
@@ -137,41 +137,45 @@ LOAD loader.o
                 0x000000008020362c                uvmunmap
                 0x000000008020370e                freewalk
                 0x00000000802037ce                uvmfree
-                0x000000008020381c                kvmmake
-                0x00000000802038fe                kvminit
-                0x000000008020393a                kvminithart
- .text          0x000000008020396c      0xb24 task.o
-                0x00000000802039a0                tcx_init
-                0x0000000080203a18                procinit
-                0x0000000080203a5a                proc_mapstacks
-                0x0000000080203b36                proc_trap
-                0x0000000080203b80                proc_pagetable
-                0x0000000080203c0a                task_create_pt
-                0x0000000080203c9a                app_init
-                0x0000000080203dfa                get_current_trap_cx
-                0x0000000080203e26                current_user_token
-                0x0000000080203e58                schedule
-                0x0000000080203f60                run_first_task
-                0x0000000080203fa4                current_proc
-                0x0000000080203fce                allocpid
-                0x0000000080204008                allocproc
-                0x000000008020407c                __sys_fork
-                0x000000008020415a                exec
- .text          0x0000000080204490       0x6c assert.o
-                0x00000000802044ae                assertion_failure
- .text          0x00000000802044fc      0x430 vsprintf.o
-                0x00000000802044fc                _vsnprintf
- .text          0x000000008020492c       0xc2 printf.o
-                0x0000000080204996                printf
- .text          0x00000000802049ee      0x552 loader.o
-                0x00000000802049ee                get_num_app
-                0x0000000080204a06                get_app_data
-                0x0000000080204ab6                get_app_data_by_name
-                0x0000000080204b68                get_app_names
-                0x0000000080204c64                flags_to_mmap_prot
-                0x0000000080204cea                load_app
+                0x000000008020381c                proc_freepagetable
+                0x000000008020388e                kvmmake
+                0x0000000080203970                kvminit
+                0x00000000802039ac                kvminithart
+ .text          0x00000000802039de      0x944 task.o
+                0x0000000080203a12                tcx_init
+                0x0000000080203a8a                procinit
+                0x0000000080203acc                proc_mapstacks
+                0x0000000080203ba8                proc_trap
+                0x0000000080203bf2                proc_pagetable
+                0x0000000080203c7c                proc_ustack
+                0x0000000080203ce4                task_create_pt
+                0x0000000080203d74                app_init
+                0x0000000080203ed4                get_current_trap_cx
+                0x0000000080203f00                current_user_token
+                0x0000000080203f32                schedule
+                0x000000008020403a                run_first_task
+                0x000000008020407e                current_proc
+                0x00000000802040a8                allocpid
+                0x00000000802040e2                allocproc
+                0x0000000080204156                __sys_fork
+                0x0000000080204234                exec
+ .text          0x0000000080204322       0x6c assert.o
+                0x0000000080204340                assertion_failure
+ .text          0x000000008020438e      0x430 vsprintf.o
+                0x000000008020438e                _vsnprintf
+ .text          0x00000000802047be       0xc2 printf.o
+                0x0000000080204828                printf
+ .text          0x0000000080204880      0x54c loader.o
+                0x0000000080204880                get_num_app
+                0x0000000080204898                get_app_data
+                0x0000000080204948                get_app_data_by_name
+                0x00000000802049fa                get_app_names
+                0x0000000080204af6                flags_to_mmap_prot
+                0x0000000080204b7c                elf_check
+                0x0000000080204bf6                load_segment
+                0x0000000080204d66                load_app
                 0x0000000080205000                . = ALIGN (0x1000)
- *fill*         0x0000000080204f40       0xc0 
+ *fill*         0x0000000080204dcc      0x234 
                 0x0000000080205000                PROVIDE (etext = .)
 
 .rodata         0x0000000080205000     0x1000
@@ -187,13 +191,13 @@ LOAD loader.o
  .rodata        0x0000000080205138       0x38 stack.o
  .rodata        0x0000000080205170       0xba address.o
  *fill*         0x000000008020522a        0x6 
- .rodata        0x0000000080205230       0xc0 task.o
- .rodata        0x00000000802052f0       0x74 assert.o
- .rodata        0x0000000080205364       0x58 vsprintf.o
- *fill*         0x00000000802053bc        0x4 
- .rodata        0x00000000802053c0       0xd3 loader.o
+ .rodata        0x0000000080205230       0x70 task.o
+ .rodata        0x00000000802052a0       0x74 assert.o
+ .rodata        0x0000000080205314       0x58 vsprintf.o
+ *fill*         0x000000008020536c        0x4 
+ .rodata        0x0000000080205370       0xd3 loader.o
                 0x0000000080206000                . = ALIGN (0x1000)
- *fill*         0x0000000080205493      0xb6d 
+ *fill*         0x0000000080205443      0xbbd 
 
 .rela.dyn       0x0000000080206000        0x0
  .rela.text     0x0000000080206000        0x0 entry.o
@@ -330,7 +334,7 @@ OUTPUT(os.elf elf64-littleriscv)
  .comment       0x000000000000001b       0x1c printf.o
  .comment       0x000000000000001b       0x1c loader.o
 
-.debug_line     0x0000000000000000     0x2f50
+.debug_line     0x0000000000000000     0x2dad
  .debug_line    0x0000000000000000       0x52 entry.o
  .debug_line    0x0000000000000052      0x238 kerneltrap.o
  .debug_line    0x000000000000028a       0x72 switch.o
@@ -343,12 +347,12 @@ OUTPUT(os.elf elf64-littleriscv)
  .debug_line    0x0000000000000c0f      0x130 app.o
  .debug_line    0x0000000000000d3f      0x17c timer.o
  .debug_line    0x0000000000000ebb      0x18f stack.o
- .debug_line    0x000000000000104a      0xb62 address.o
- .debug_line    0x0000000000001bac      0x8b8 task.o
- .debug_line    0x0000000000002464       0x80 assert.o
- .debug_line    0x00000000000024e4      0x4e8 vsprintf.o
- .debug_line    0x00000000000029cc       0xd0 printf.o
- .debug_line    0x0000000000002a9c      0x4b4 loader.o
+ .debug_line    0x000000000000104a      0xb84 address.o
+ .debug_line    0x0000000000001bce      0x6eb task.o
+ .debug_line    0x00000000000022b9       0x80 assert.o
+ .debug_line    0x0000000000002339      0x4e8 vsprintf.o
+ .debug_line    0x0000000000002821       0xd0 printf.o
+ .debug_line    0x00000000000028f1      0x4bc loader.o
 
 .debug_line_str
                 0x0000000000000000      0x1c8
@@ -392,7 +396,7 @@ OUTPUT(os.elf elf64-littleriscv)
                                          0xaf (size before relaxing)
  .debug_line_str
                 0x0000000000000187        0xb task.o
-                                         0xb6 (size before relaxing)
+                                         0xad (size before relaxing)
  .debug_line_str
                 0x0000000000000192        0xd assert.o
                                          0x57 (size before relaxing)
@@ -406,45 +410,45 @@ OUTPUT(os.elf elf64-littleriscv)
                 0x00000000000001bb        0xd loader.o
                                          0xaf (size before relaxing)
 
-.debug_info     0x0000000000000000     0x4475
+.debug_info     0x0000000000000000     0x4375
  .debug_info    0x0000000000000000       0x28 entry.o
  .debug_info    0x0000000000000028       0x29 kerneltrap.o
  .debug_info    0x0000000000000051       0x28 switch.o
  .debug_info    0x0000000000000079      0x2b8 sbi.o
- .debug_info    0x0000000000000331      0x162 main.o
- .debug_info    0x0000000000000493      0x216 printk.o
- .debug_info    0x00000000000006a9      0x422 trap.o
- .debug_info    0x0000000000000acb      0x4d1 syscall.o
- .debug_info    0x0000000000000f9c      0x1c1 string.o
- .debug_info    0x000000000000115d      0x2b6 app.o
- .debug_info    0x0000000000001413      0x206 timer.o
- .debug_info    0x0000000000001619      0x221 stack.o
- .debug_info    0x000000000000183a      0xfac address.o
- .debug_info    0x00000000000027e6      0xe5e task.o
- .debug_info    0x0000000000003644      0x10f assert.o
- .debug_info    0x0000000000003753      0x233 vsprintf.o
- .debug_info    0x0000000000003986      0x1df printf.o
- .debug_info    0x0000000000003b65      0x910 loader.o
+ .debug_info    0x0000000000000331      0x172 main.o
+ .debug_info    0x00000000000004a3      0x216 printk.o
+ .debug_info    0x00000000000006b9      0x422 trap.o
+ .debug_info    0x0000000000000adb      0x4d1 syscall.o
+ .debug_info    0x0000000000000fac      0x1c1 string.o
+ .debug_info    0x000000000000116d      0x2b6 app.o
+ .debug_info    0x0000000000001423      0x206 timer.o
+ .debug_info    0x0000000000001629      0x221 stack.o
+ .debug_info    0x000000000000184a      0xfe7 address.o
+ .debug_info    0x0000000000002831      0xcd1 task.o
+ .debug_info    0x0000000000003502      0x10f assert.o
+ .debug_info    0x0000000000003611      0x233 vsprintf.o
+ .debug_info    0x0000000000003844      0x1df printf.o
+ .debug_info    0x0000000000003a23      0x952 loader.o
 
-.debug_abbrev   0x0000000000000000     0x16ba
+.debug_abbrev   0x0000000000000000     0x16ef
  .debug_abbrev  0x0000000000000000       0x14 entry.o
  .debug_abbrev  0x0000000000000014       0x14 kerneltrap.o
  .debug_abbrev  0x0000000000000028       0x14 switch.o
  .debug_abbrev  0x000000000000003c      0x114 sbi.o
- .debug_abbrev  0x0000000000000150       0xd4 main.o
- .debug_abbrev  0x0000000000000224      0x15a printk.o
- .debug_abbrev  0x000000000000037e      0x19e trap.o
- .debug_abbrev  0x000000000000051c      0x1d3 syscall.o
- .debug_abbrev  0x00000000000006ef       0xc6 string.o
- .debug_abbrev  0x00000000000007b5      0x131 app.o
- .debug_abbrev  0x00000000000008e6      0x136 timer.o
- .debug_abbrev  0x0000000000000a1c      0x143 stack.o
- .debug_abbrev  0x0000000000000b5f      0x3b2 address.o
- .debug_abbrev  0x0000000000000f11      0x312 task.o
- .debug_abbrev  0x0000000000001223       0xb8 assert.o
- .debug_abbrev  0x00000000000012db       0xbb vsprintf.o
- .debug_abbrev  0x0000000000001396      0x111 printf.o
- .debug_abbrev  0x00000000000014a7      0x213 loader.o
+ .debug_abbrev  0x0000000000000150       0xd6 main.o
+ .debug_abbrev  0x0000000000000226      0x15a printk.o
+ .debug_abbrev  0x0000000000000380      0x19e trap.o
+ .debug_abbrev  0x000000000000051e      0x1d3 syscall.o
+ .debug_abbrev  0x00000000000006f1       0xc6 string.o
+ .debug_abbrev  0x00000000000007b7      0x131 app.o
+ .debug_abbrev  0x00000000000008e8      0x136 timer.o
+ .debug_abbrev  0x0000000000000a1e      0x143 stack.o
+ .debug_abbrev  0x0000000000000b61      0x3b2 address.o
+ .debug_abbrev  0x0000000000000f13      0x330 task.o
+ .debug_abbrev  0x0000000000001243       0xb8 assert.o
+ .debug_abbrev  0x00000000000012fb       0xbb vsprintf.o
+ .debug_abbrev  0x00000000000013b6      0x111 printf.o
+ .debug_abbrev  0x00000000000014c7      0x228 loader.o
 
 .debug_aranges  0x0000000000000000      0x360
  .debug_aranges
@@ -484,7 +488,7 @@ OUTPUT(os.elf elf64-littleriscv)
  .debug_aranges
                 0x0000000000000330       0x30 loader.o
 
-.debug_str      0x0000000000000000      0xcf1
+.debug_str      0x0000000000000000      0xd20
  .debug_str     0x0000000000000000       0x34 entry.o
  .debug_str     0x0000000000000034       0x11 kerneltrap.o
                                          0x39 (size before relaxing)
@@ -508,20 +512,20 @@ OUTPUT(os.elf elf64-littleriscv)
                                         0x15e (size before relaxing)
  .debug_str     0x0000000000000697       0x24 stack.o
                                         0x134 (size before relaxing)
- .debug_str     0x00000000000006bb      0x333 address.o
-                                        0x594 (size before relaxing)
- .debug_str     0x00000000000009ee      0x2b5 task.o
-                                        0x5c5 (size before relaxing)
- .debug_str     0x0000000000000ca3        0xf assert.o
+ .debug_str     0x00000000000006bb      0x346 address.o
+                                        0x5b1 (size before relaxing)
+ .debug_str     0x0000000000000a01      0x259 task.o
+                                        0x535 (size before relaxing)
+ .debug_str     0x0000000000000c5a        0xf assert.o
                                          0xf8 (size before relaxing)
- .debug_str     0x0000000000000cb2       0x19 vsprintf.o
+ .debug_str     0x0000000000000c69       0x19 vsprintf.o
                                         0x144 (size before relaxing)
- .debug_str     0x0000000000000ccb       0x19 printf.o
+ .debug_str     0x0000000000000c82       0x19 printf.o
                                         0x16b (size before relaxing)
- .debug_str     0x0000000000000ccb       0x26 loader.o
-                                        0x449 (size before relaxing)
+ .debug_str     0x0000000000000c82       0x9e loader.o
+                                        0x46c (size before relaxing)
 
-.debug_frame    0x0000000000000000     0x17b8
+.debug_frame    0x0000000000000000     0x1868
  .debug_frame   0x0000000000000000       0xd0 sbi.o
  .debug_frame   0x00000000000000d0       0x40 main.o
  .debug_frame   0x0000000000000110       0xc8 printk.o
@@ -531,12 +535,12 @@ OUTPUT(os.elf elf64-littleriscv)
  .debug_frame   0x0000000000000568      0x190 app.o
  .debug_frame   0x00000000000006f8      0x1c0 timer.o
  .debug_frame   0x00000000000008b8      0x130 stack.o
- .debug_frame   0x00000000000009e8      0x7d8 address.o
- .debug_frame   0x00000000000011c0      0x3a0 task.o
- .debug_frame   0x0000000000001560       0x68 assert.o
- .debug_frame   0x00000000000015c8       0x40 vsprintf.o
- .debug_frame   0x0000000000001608       0x70 printf.o
- .debug_frame   0x0000000000001678      0x140 loader.o
+ .debug_frame   0x00000000000009e8      0x808 address.o
+ .debug_frame   0x00000000000011f0      0x3c8 task.o
+ .debug_frame   0x00000000000015b8       0x68 assert.o
+ .debug_frame   0x0000000000001620       0x40 vsprintf.o
+ .debug_frame   0x0000000000001660       0x70 printf.o
+ .debug_frame   0x00000000000016d0      0x198 loader.o
 
 .debug_rnglists
                 0x0000000000000000       0x81

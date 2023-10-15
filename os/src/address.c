@@ -408,6 +408,13 @@ void uvmfree(PageTable* pt , u64 sz)
 }
 
 
+void proc_freepagetable(PageTable* pagetable, u64 sz)
+{
+  uvmunmap(pagetable, floor_virts(virt_addr_from_size_t(TRAMPOLINE)), 1, 0);
+  uvmunmap(pagetable, floor_virts(virt_addr_from_size_t(TRAPFRAME)), 1, 1);
+  uvmfree(pagetable, sz);
+}
+
 
 extern char etext[];
 extern char trampoline[];

@@ -85,6 +85,16 @@ void proc_pagetable(struct TaskControlBlock *p)
   p->pagetable = pagetable;
 }
 
+
+void proc_ustack(struct TaskControlBlock *p)
+{
+      // 映射应用程序用户栈开始地址
+    PhysPageNum ppn = kalloc();
+    u64 paddr = phys_addr_from_phys_page_num(ppn).value;
+    PageTable_map(&p->pagetable,virt_addr_from_size_t(p->ustack - PAGE_SIZE),phys_addr_from_size_t(paddr), \
+                  PAGE_SIZE, PTE_R | PTE_W | PTE_U);
+}
+
 TaskControlBlock* task_create_pt(size_t app_id)
 {
   if(_top < MAX_TASKS)
@@ -237,66 +247,25 @@ int __sys_fork()
   return np->pid;
 }
 
+
+
 void exec(const char* name)
 {
 
     AppMetadata metadata = get_app_data_by_name(name);
     //ELF 文件头
     elf64_ehdr_t *ehdr = metadata.start;
-    //判断 elf 文件的魔数
-    assert(*(u32 *)ehdr==ELFMAG);
-    //判断传入文件是否为 riscv64 的
-    if (ehdr->e_machine != EM_RISCV || ehdr->e_ident[EI_CLASS] != ELFCLASS64)
-    {
-        panic("only riscv64 elf file is supported");
-    }
-    elf64_phdr_t *phdr; 
+    elf_check(ehdr);
 
     struct TaskControlBlock* proc = current_proc();
     PageTable old_pagetable = proc->pagetable;
     u64 oldsz = proc->base_size;
-    u64  user_satp = current_user_token();  
     //重新分配页表
     proc_pagetable(proc);
-    for (size_t i = 0; i < ehdr->e_phnum; i++)
-    {
-        //拿到每个Program Header的指针
-        phdr =(u64) (ehdr->e_phoff + ehdr->e_phentsize * i + metadata.start);
-        if(phdr->p_type == PT_LOAD)
-        {
-            // 获取映射内存段开始位置
-            u64 start_va = phdr->p_vaddr;
-            // 获取映射内存段结束位置
-            proc->ustack = start_va + phdr->p_memsz;
-            //  转换elf的可读，可写，可执行的 flags
-            u8 map_perm = PTE_U | flags_to_mmap_prot(phdr->p_flags);
-            // 获取映射内存大小,需要向上对齐
-            u64 map_size = PGROUNDUP(phdr->p_memsz);
-            for (size_t j = 0; j < map_size; j+= PAGE_SIZE)
-            {
-                // 分配物理内存，加载程序段，然后映射
-                PhysPageNum ppn = kalloc();
-                    //获取到分配的物理内存的地址
-                u64 paddr = phys_addr_from_phys_page_num(ppn).value;
-                memcpy(paddr, metadata.start + phdr->p_offset + j, PAGE_SIZE);
-                    //内存逻辑段内存映射
-                PageTable_map(&proc->pagetable,virt_addr_from_size_t(start_va + j), \
-                                phys_addr_from_size_t(paddr), PAGE_SIZE , map_perm);
-                
-            }
-        
-            
-        }
-    }
-
+    //加载程序段
+    load_segment(ehdr,proc);
     // 映射应用程序用户栈开始地址
-    proc->ustack =  2 * PAGE_SIZE + PGROUNDUP(proc->ustack);
-    PhysPageNum ppn = kalloc();
-    u64 paddr = phys_addr_from_phys_page_num(ppn).value;
-    PageTable_map(&proc->pagetable,virt_addr_from_size_t(proc->ustack - PAGE_SIZE),phys_addr_from_size_t(paddr), \
-                  PAGE_SIZE, PTE_R | PTE_W | PTE_U);
-    proc->base_size=proc->ustack;
-
+    proc_ustack(proc);
 
     TrapContext* cx_ptr = proc->trap_cx_ppn;
     cx_ptr->sepc = (u64)ehdr->e_entry;
@@ -312,8 +281,6 @@ void exec(const char* name)
     cx_ptr->kernel_sp = proc->kstack;
     // 设置内核trap_handler的地址
     cx_ptr->trap_handler = (u64)trap_handler;
-    uvmunmap(&old_pagetable, floor_virts(virt_addr_from_size_t(TRAMPOLINE)), 1, 0);
-    uvmunmap(&old_pagetable, floor_virts(virt_addr_from_size_t(TRAPFRAME)), 1, 1);
-    uvmfree(&old_pagetable, oldsz);
-    user_satp = current_user_token();  
+
+    proc_freepagetable(&old_pagetable,oldsz);
 }

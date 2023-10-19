@@ -19,7 +19,6 @@ void trap_handler()
 {
 	set_kernel_trap_entry();
 	TrapContext* cx = get_current_trap_cx();
-
     reg_t scause = r_scause();
 	reg_t cause_code = scause & 0xfff;
 	if(scause & 0x8000000000000000)
@@ -43,7 +42,9 @@ void trap_handler()
 		/* U模式下的syscall */
 		case 8:
 			cx->sepc += 8;
-			cx->a0 = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
+			u64 result = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
+			cx = get_current_trap_cx();
+			cx->a0 = result;
 			break;
 		default:
 			printk("undfined exception scause:%x\n",scause);

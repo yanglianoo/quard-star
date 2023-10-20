@@ -219,7 +219,7 @@ void indexes(VirtPageNum vpn, size_t* result)
     }
 }
 
-
+/* 分配一页内存 */
 PhysPageNum kalloc(void)
 {
     PhysPageNum frame =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
@@ -227,6 +227,11 @@ PhysPageNum kalloc(void)
     return frame;
 }
 
+/* 释放一页内存 */
+void kfree(PhysPageNum ppn)
+{
+    StackFrameAllocator_dealloc(&FrameAllocatorImpl,ppn);
+}
 
 PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
 {
@@ -254,12 +259,6 @@ PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn)
         //取出进入下级页表的物理页号
         ppn = PageTableEntry_ppn(pte);
     }
-}
-
-
-void kfree(PhysPageNum ppn)
-{
-    StackFrameAllocator_dealloc(&FrameAllocatorImpl,ppn);
 }
 
 PageTableEntry* find_pte(PageTable* pt, VirtPageNum vpn)
@@ -350,25 +349,18 @@ void uvmunmap(PageTable* pt, VirtPageNum vpn, u64 npages, int do_free)
     u64 a;
     for (a = vpn.value; a < vpn.value + npages; a++)
     {
-
-        printk("vpn.value:%d\n",vpn.value);
         pte = find_pte(pt,virt_page_num_from_size_t(a));
-        
         if(pte !=0 )
         {
-            printk("pte->bits:%x\n",(u64)pte->bits);
             if(do_free)
             {
                 u64 phyaddr = PTE2PA(pte->bits);
                 PhysPageNum ppn = floor_phys(phys_addr_from_size_t(phyaddr));
-                printk("ppn.value:%d\n",ppn.value);
                 kfree(ppn);
-
             }
             *pte = PageTableEntry_empty();
         }
     }
-    
 }
 
 /* 解除页表映射关系，释放内存*/
@@ -377,24 +369,18 @@ void freewalk(PhysPageNum ppn)
     for (int i = 0; i < 512; i++)
     {
         PageTableEntry* pte =  &get_pte_array(ppn)[i];
-        //printk("i:%d ",i);
         if((pte->bits & PTE_V) && (pte->bits & (PTE_R|PTE_W|PTE_X)) == 0)
         {
-            //取出下一级页表的页号
-            //printk("pte->bits:%x\n",pte->bits);
+
             PhysPageNum child_ppn = PageTableEntry_ppn(pte);
-            //printk("child ppn:%d\n",child_ppn.value);
             freewalk(child_ppn);
             *pte = PageTableEntry_empty();
         }
         else if(pte->bits & PTE_V)
         {
-            //printk("pte:%x\n",pte->bits);
             panic("freewalk: leaf");
         }
     }
-    printk("free ppn:%d\n",ppn.value);
-    printk("\n");
     kfree(ppn); 
 }
 

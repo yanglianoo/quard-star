@@ -6,7 +6,9 @@ int main()
 {
     while (1)
     {
-        printf("exec!\n");
+       // printf("exec!\n");
+       char a = getchar();
+       printf("%x",a);
     }
     return 0;
 }

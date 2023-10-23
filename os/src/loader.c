@@ -30,6 +30,7 @@ AppMetadata  get_app_data(size_t app_id)
 AppMetadata get_app_data_by_name(char* path)
 {
     AppMetadata metadata;
+    metadata.id = -1;
     int app_num = get_num_app();
     for (size_t i = 0; i < app_num; i++)
     {
@@ -40,7 +41,8 @@ AppMetadata get_app_data_by_name(char* path)
            return metadata;
         }
     }
-    printk("not exit!!\n");
+    printf("app not exit!!\n");
+    return metadata;
 }
 
 void get_app_names()

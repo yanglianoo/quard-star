@@ -249,10 +249,14 @@ int __sys_fork()
 
 
 
-void exec(const char* name)
+int exec(const char* name)
 {
 
     AppMetadata metadata = get_app_data_by_name(name);
+    if(metadata.id<0)
+    {
+      return -1;
+    }
     //ELF 文件头
     elf64_ehdr_t *ehdr = metadata.start;
     elf_check(ehdr);
@@ -283,4 +287,67 @@ void exec(const char* name)
     cx_ptr->trap_handler = (u64)trap_handler;
 
     proc_freepagetable(&old_pagetable,oldsz);
+
+    return 0;
 }
+
+
+void children_proc_clear(struct TaskControlBlock *p)
+{
+  struct TaskControlBlock *children;
+  for(p = tasks; p < &tasks[MAX_TASKS]; p++)
+  {
+    if(children->parent == p)
+    {
+      children->parent = &tasks[0];
+    }
+  }
+}
+
+void exit_current_and_run_next(u64 exit_code)
+{
+  /* 不能把0号进程干掉了 */
+  struct TaskControlBlock* p = current_proc();
+  if(p->pid == 0)
+  {
+    panic("init exiting");
+  }
+
+  p->exit_code = exit_code;
+  p->task_state = Zombie;
+  children_proc_clear(p);
+  schedule();
+}
+
+
+int wait()
+{
+  struct TaskControlBlock *children;
+  struct TaskControlBlock* p = current_proc();
+  int pid,havekids;
+
+  for(;;)
+  {
+    havekids = 0;
+    for(children = tasks; children < &tasks[MAX_TASKS];children++)
+    {
+      if(children->parent == p)
+      {
+        havekids = 1;
+        if(children->exit_code == Zombie)
+        {
+
+          pid = children->pid;
+          freeproc(children);
+          return pid;
+        }
+      }
+    }
+    // 如果此进程没有子进程，则返回 -1
+    if(!havekids)
+    {
+      return -1;
+    }
+  }
+}
+

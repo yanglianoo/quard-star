@@ -10,7 +10,7 @@ typedef enum TaskState
 	UnInit, // 未初始化
     Ready, // 准备运行
     Running, // 正在运行
-    Exited, // 已退出
+    Zombie, // 已退出
 }TaskState;
 
 typedef struct TaskControlBlock
@@ -25,6 +25,7 @@ typedef struct TaskControlBlock
     u64  ustack;                //应用用户栈的虚拟地址
     u64  entry;                 //应用程序入口地址
     PageTable pagetable;        //应用页表所在物理页
+    u64 exit_code;              //进程退出码
 }TaskControlBlock;
 
 /* 映射用户程序内核栈 */
@@ -45,8 +46,8 @@ void run_first_task();
 void proc_ustack(proc);
 
 int __sys_fork();
-void exec(const char* name);
-
+int exec(const char* name);
+void exit_current_and_run_next(u64 exit_code);
 #endif
 
 

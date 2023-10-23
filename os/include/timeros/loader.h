@@ -10,7 +10,7 @@
 typedef struct {
     uint64_t start;
     uint64_t size;
-    u64 id;
+    int id;
 } AppMetadata;
 
 #define EI_NIDENT 16

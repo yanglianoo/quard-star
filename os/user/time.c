@@ -12,12 +12,12 @@ int main()
         if(pid > 0)
         {
             // 父进程执行的逻辑
-          // printf("father\n");
+           printf("father\n");
         }
         else if(pid == 0)
         {
             // 子进程执行的逻辑
-            //printf("child\n");
+            printf("child\n");
         }
         else // pid == -1
         {

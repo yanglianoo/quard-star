@@ -401,6 +401,18 @@ void proc_freepagetable(PageTable* pagetable, u64 sz)
   uvmfree(pagetable, sz);
 }
 
+void freeproc(struct TaskControlBlock* p)
+{
+    proc_freepagetable(&p->pagetable, p->base_size);
+
+    p->pagetable.root_ppn.value = 0;
+    p->base_size = 0;
+    p->parent =  0;
+    p->ustack = 0;
+    p->entry = 0;
+    p->task_state = UnInit;
+    p->exit_code = 0;
+}
 
 extern char etext[];
 extern char trampoline[];

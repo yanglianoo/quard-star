@@ -42,7 +42,7 @@ void trap_handler()
 		/* U模式下的syscall */
 		case 8:
 			cx->sepc += 8;
-			u64 result = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
+			int result = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
 			cx = get_current_trap_cx();
 			cx->a0 = result;
 			break;
@@ -62,6 +62,7 @@ void trap_return()
     u64 trap_cx_ptr = TRAPFRAME;  
     /* 要继续执行的应用地址空间的 token */  
     u64  user_satp = current_user_token();  
+	printk("satp:%x\n",user_satp);
 	/* 计算_restore函数的虚拟地址 */
     u64  restore_va = (u64)__restore - (u64)__alltraps + TRAMPOLINE;  
 	asm volatile (    

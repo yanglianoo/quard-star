@@ -61,7 +61,6 @@ void proc_mapstacks(PageTable* kpgtbl)
 void proc_trap(struct TaskControlBlock *p)
 {
   // 为每个程序分配一页trap物理内存
-  printk("alloc trap!\n");
   p->trap_cx_ppn = phys_addr_from_phys_page_num(kalloc()).value;
   // 初始化任务上下文全部为0
   memset(&p->task_context, 0 ,sizeof(p->task_context));
@@ -291,6 +290,19 @@ int exec(const char* name)
     return 0;
 }
 
+
+void freeproc(struct TaskControlBlock* p)
+{
+    proc_freepagetable(&p->pagetable, p->base_size);
+
+    p->pagetable.root_ppn.value = 0;
+    p->base_size = 0;
+    p->parent =  0;
+    p->ustack = 0;
+    p->entry = 0;
+    p->task_state = UnInit;
+    p->exit_code = 0;
+}
 
 void children_proc_clear(struct TaskControlBlock *p)
 {

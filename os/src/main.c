@@ -26,6 +26,6 @@ void os_main()
    //初始化时钟
    timer_init();
 
-  run_first_task();
+   run_first_task();
 
 }

@@ -11,7 +11,7 @@ _num_app:
 .global _app_names
 _app_names:
 .string "time"
-.string "write"
+.string "user_shell"
 .string "xec"
 .section .data
 .global app_0_start
@@ -25,7 +25,7 @@ app_0_end:
 .global app_1_end
 .align 3
 app_1_start:
-.incbin "../user/bin/write"
+.incbin "../user/bin/user_shell"
 app_1_end:
 .section .data
 .global app_2_start

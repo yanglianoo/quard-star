@@ -44,3 +44,15 @@ int strcmp(const char *lhs, const char *rhs)
     }
     return *lhs < *rhs ? -1 : *lhs > *rhs;
 }
+
+
+void strncat(char *dest, const char *src, int n) {
+    while (*dest) {
+        dest++;
+    }
+    while (n > 0 && *src) {
+        *dest++ = *src++;
+        n--;
+    }
+    *dest = '\0';
+}

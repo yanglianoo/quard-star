@@ -48,6 +48,7 @@ void proc_ustack(proc);
 int __sys_fork();
 int exec(const char* name);
 void exit_current_and_run_next(u64 exit_code);
+void freeproc(struct TaskControlBlock* p);
 #endif
 
 

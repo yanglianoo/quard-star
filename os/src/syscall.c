@@ -48,6 +48,7 @@ void __sys_read(size_t fd, const char* data, size_t len)
             if(c != -1)
                 break;
             schedule();
+            continue;
         }
         char* str = translated_byte_buffer(data);
         str[0]  = c;

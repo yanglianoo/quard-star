@@ -62,7 +62,6 @@ void trap_return()
     u64 trap_cx_ptr = TRAPFRAME;  
     /* 要继续执行的应用地址空间的 token */  
     u64  user_satp = current_user_token();  
-	printk("satp:%x\n",user_satp);
 	/* 计算_restore函数的虚拟地址 */
     u64  restore_va = (u64)__restore - (u64)__alltraps + TRAMPOLINE;  
 	asm volatile (    

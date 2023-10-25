@@ -14,34 +14,35 @@ int main()
     char line[BUFFER_SIZE];
     while (1)
     {
-        // char c = getchar();
-        // switch (c)
-        // {
-        // case CR:
-        //     printf("\n");
-        //     if(strlen(line) > 0)
-        //     {
-        //         line[strlen(line)] = '\0';
-        //         int pid = sys_fork();
-        //         printf("pid:%d\n",pid);
-        //         if(pid==0)
-        //         {
-        //             sys_exec(line);
-        //         }
-        //     }
-        //     break;
-        // case BS:
-        //     if (strlen(line) > 0) 
-        //     {
-        //         printf("\b \b");
-        //         line[strlen(line) - 1] = '\0';
-        //     }
-        //     break;
-        // default:
-        //     printf("%c",c);
-        //     strncat(line,(char*)&c,1);
-        //     break;
-        // }
+        //printf("debug\n");
+        char c = getchar();
+        switch (c)
+        {
+        case CR:
+            printf("\n");
+            if(strlen(line) > 0)
+            {
+                line[strlen(line)] = '\0';
+                int pid = sys_fork();
+                printf("pid:%d\n",pid);
+                if(pid==0)
+                {
+                    sys_exec("xec");
+                }
+            }
+            break;
+        case BS:
+            if (strlen(line) > 0) 
+            {
+                printf("\b \b");
+                line[strlen(line) - 1] = '\0';
+            }
+            break;
+        default:
+            printf("%c",c);
+            strncat(line,(char*)&c,1);
+            break;
+        }
 
 
     }

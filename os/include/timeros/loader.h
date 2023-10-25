@@ -73,4 +73,5 @@ void get_app_names();
 AppMetadata get_app_data_by_name(char* path);
 u8 flags_to_mmap_prot(u8 flags);
 void elf_check(elf64_ehdr_t *ehdr);
+void load_segment(elf64_ehdr_t *ehdr,struct TaskControlBlock* proc);
 #endif

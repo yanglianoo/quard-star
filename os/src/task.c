@@ -158,17 +158,15 @@ void schedule()
     /* 轮转调度 */
     int next = _current + 1;
     next = next % _top;
-
+    tasks[_current].task_state = Ready;
     if(tasks[next].task_state == Ready)
     {
         struct TaskContext *current_task_cx_ptr = &(tasks[_current].task_context);
         struct TaskContext *next_task_cx_ptr = &(tasks[next].task_context);
         tasks[next].task_state = Running;
-        tasks[_current].task_state = Ready;
         _current = next;
         __switch(current_task_cx_ptr,next_task_cx_ptr);
     }
-    
 }
 
 void run_first_task()
@@ -233,16 +231,17 @@ int __sys_fork()
   // 子进程返回值为0
   TrapContext* cx_ptr = np->trap_cx_ppn;
   cx_ptr->a0 = 0;
+  cx_ptr->kernel_sp = np->kstack;
   // 复制TCB的信息
   np->entry = p->entry;
   np->base_size = p->base_size;
   np->parent = p;
   np->ustack = p->ustack;
-  // 设置子进程返回地址和内核栈
-  np->task_context.ra = trap_return;
-  np->task_context.sp = np->kstack;
+
+  np->task_context = tcx_init((reg_t)np->kstack);
 
   _top++;
+  printk("sys_fork:%d\n",_top);
   return np->pid;
 }
 
@@ -261,32 +260,25 @@ int exec(const char* name)
     elf_check(ehdr);
 
     struct TaskControlBlock* proc = current_proc();
+    printk("trap frame1:%lx\n",proc->trap_cx_ppn);
     PageTable old_pagetable = proc->pagetable;
     u64 oldsz = proc->base_size;
     //重新分配页表
     proc_pagetable(proc);
+    printk("trap frame2:%lx\n",proc->trap_cx_ppn);
     //加载程序段
     load_segment(ehdr,proc);
-    // 映射应用程序用户栈开始地址
+    //映射应用程序用户栈开始地址
     proc_ustack(proc);
 
     TrapContext* cx_ptr = proc->trap_cx_ppn;
     cx_ptr->sepc = (u64)ehdr->e_entry;
     cx_ptr->sp = proc->ustack;
-    reg_t sstatus = r_sstatus();
-    // 设置 sstatus 寄存器第8位即SPP位为0 表示为U模式
-    sstatus &= (0U << 8);
-    w_sstatus(sstatus);
-    cx_ptr->sstatus = sstatus; 
-    // 设置内核页表token
-    cx_ptr->kernel_satp = kernel_satp;
-    // 设置内核栈虚拟地址
-    cx_ptr->kernel_sp = proc->kstack;
-    // 设置内核trap_handler的地址
-    cx_ptr->trap_handler = (u64)trap_handler;
 
+
+    
     proc_freepagetable(&old_pagetable,oldsz);
-
+    printk("sys_exec\n");
     return 0;
 }
 

@@ -316,7 +316,7 @@ int uvmcopy(PageTable* old, PageTable* new, u64 sz)
     u64 pa, i;
     u8 flags;
 
-    for (i = 0; i < sz; i+=PAGE_SIZE)
+    for (i = 0; i <= sz; i+=PAGE_SIZE)
     {
         VirtPageNum vpn = floor_virts(virt_addr_from_size_t(i));
         pte = find_pte(old,vpn);
@@ -397,7 +397,7 @@ void uvmfree(PageTable* pt , u64 sz)
 void proc_freepagetable(PageTable* pagetable, u64 sz)
 {
   uvmunmap(pagetable, floor_virts(virt_addr_from_size_t(TRAMPOLINE)), 1, 0);
-  uvmunmap(pagetable, floor_virts(virt_addr_from_size_t(TRAPFRAME)), 1, 1);
+  uvmunmap(pagetable, floor_virts(virt_addr_from_size_t(TRAPFRAME)), 1, 0);
   uvmfree(pagetable, sz);
 }
 

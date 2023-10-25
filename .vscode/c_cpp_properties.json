@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "os/include"
+            ],
+            "defines": []
+        }
+    ],
+    "version": 4
+}

@@ -33,26 +33,14 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "portmacro.h"
-
+#include "sbi.h"
+#include "ns16550.h"
+#include "riscv_asm.h"
 /* Standard includes. */
 #include "string.h"
 
-#ifdef configCLINT_BASE_ADDRESS
-	#warning The configCLINT_BASE_ADDRESS constant has been deprecated.  configMTIME_BASE_ADDRESS and configMTIMECMP_BASE_ADDRESS are currently being derived from the (possibly 0) configCLINT_BASE_ADDRESS setting.  Please update to define configMTIME_BASE_ADDRESS and configMTIMECMP_BASE_ADDRESS dirctly in place of configCLINT_BASE_ADDRESS.  See https://www.FreeRTOS.org/Using-FreeRTOS-on-RISC-V.html
-#endif
 
-#ifndef configMTIME_BASE_ADDRESS
-	#warning configMTIME_BASE_ADDRESS must be defined in FreeRTOSConfig.h.  If the target chip includes a memory-mapped mtime register then set configMTIME_BASE_ADDRESS to the mapped address.  Otherwise set configMTIME_BASE_ADDRESS to 0.  See https://www.FreeRTOS.org/Using-FreeRTOS-on-RISC-V.html
-#endif
-
-#ifndef configMTIMECMP_BASE_ADDRESS
-	#warning configMTIMECMP_BASE_ADDRESS must be defined in FreeRTOSConfig.h.  If the target chip includes a memory-mapped mtimecmp register then set configMTIMECMP_BASE_ADDRESS to the mapped address.  Otherwise set configMTIMECMP_BASE_ADDRESS to 0.  See https://www.FreeRTOS.org/Using-FreeRTOS-on-RISC-V.html
-#endif
-
-/* Let the user override the pre-loading of the initial LR with the address of
-prvTaskExitError() in case it messes up unwinding of the stack in the
-debugger. */
-#ifdef configTASK_RETURN_ADDRESS
+#ifdef configTASK_RETURN_ADDRESS	
 	#define portTASK_RETURN_ADDRESS	configTASK_RETURN_ADDRESS
 #else
 	#define portTASK_RETURN_ADDRESS	prvTaskExitError
@@ -116,49 +104,47 @@ task stack, not the ISR stack). */
 
 /*-----------------------------------------------------------*/
 
-#if( configMTIME_BASE_ADDRESS != 0 ) && ( configMTIMECMP_BASE_ADDRESS != 0 )
+static uint64_t get_ticks()
+{
+    static volatile uint64_t time_elapsed = 0;
+    __asm__ __volatile__(
+        "rdtime %0"
+        : "=r"(time_elapsed));
+    return time_elapsed;
+}
 
-	void vPortSetupTimerInterrupt( void )
-	{
-	uint32_t ulCurrentTimeHigh, ulCurrentTimeLow;
-	volatile uint32_t * const pulTimeHigh = ( volatile uint32_t * const ) ( ( configMTIME_BASE_ADDRESS ) + 4UL ); /* 8-byte typer so high 32-bit word is 4 bytes up. */
-	volatile uint32_t * const pulTimeLow = ( volatile uint32_t * const ) ( configMTIME_BASE_ADDRESS );
-	volatile uint32_t ulHartId;
-
-		__asm volatile( "csrr %0, mhartid" : "=r"( ulHartId ) );
-		pullMachineTimerCompareRegister  = ( volatile uint64_t * ) ( ullMachineTimerCompareRegisterBase + ( ulHartId * sizeof( uint64_t ) ) );
-
-		do
-		{
-			ulCurrentTimeHigh = *pulTimeHigh;
-			ulCurrentTimeLow = *pulTimeLow;
-		} while( ulCurrentTimeHigh != *pulTimeHigh );
-
-		ullNextTime = ( uint64_t ) ulCurrentTimeHigh;
-		ullNextTime <<= 32ULL; /* High 4-byte word is 32-bits up. */
-		ullNextTime |= ( uint64_t ) ulCurrentTimeLow;
-		ullNextTime += ( uint64_t ) uxTimerIncrementsForOneTick;
-		*pullMachineTimerCompareRegister = ullNextTime;
-
-		/* Prepare the time to use after the next tick interrupt. */
-		ullNextTime += ( uint64_t ) uxTimerIncrementsForOneTick;
-	}
-
-#endif /* ( configMTIME_BASE_ADDRESS != 0 ) && ( configMTIME_BASE_ADDRESS != 0 ) */
 /*-----------------------------------------------------------*/
 
+/*-----------------------------------------------------------*/
+void vPortSetupTimerInterrupt( void )
+{
+	/* 通过sbi设置下次tick中断 */
+	sbi_set_timer(get_ticks() + uxTimerIncrementsForOneTick);
+}
+/*-------------------------------------------------------*/
+
+/*-----------------------------------------------------------*/
+
+void vPortClearIpiInterrupt( void )
+{
+	/* 通过sbi清除软中断，在软中断服务函数中调用 */
+	extern void sbi_clear_ipi(void);
+	sbi_clear_ipi();
+}
+
+/*-----------------------------------------------------------*/
 BaseType_t xPortStartScheduler( void )
 {
 extern void xPortStartFirstTask( void );
 
 	#if( configASSERT_DEFINED == 1 )
 	{
-		volatile uint32_t mtvec = 0;
+		volatile uint32_t stvec = 0;
 
 		/* Check the least significant two bits of mtvec are 00 - indicating
 		single vector mode. */
-		__asm volatile( "csrr %0, mtvec" : "=r"( mtvec ) );
-		configASSERT( ( mtvec & 0x03UL ) == 0 );
+		__asm volatile( "csrr %0, stvec" : "=r"( stvec ) );
+		configASSERT( ( stvec & 0x03UL ) == 0 );
 
 		/* Check alignment of the interrupt stack - which is the same as the
 		stack that was being used by main() prior to the scheduler being
@@ -173,25 +159,14 @@ extern void xPortStartFirstTask( void );
 	}
 	#endif /* configASSERT_DEFINED */
 
-	/* If there is a CLINT then it is ok to use the default implementation
-	in this file, otherwise vPortSetupTimerInterrupt() must be implemented to
-	configure whichever clock is to be used to generate the tick interrupt. */
+	 /* 通过sbi设置Timer为滴答时钟 */
 	vPortSetupTimerInterrupt();
 
-	#if( ( configMTIME_BASE_ADDRESS != 0 ) && ( configMTIMECMP_BASE_ADDRESS != 0 ) )
-	{
-		/* Enable mtime and external interrupts.  1<<7 for timer interrupt, 1<<11
-		for external interrupt.  _RB_ What happens here when mtime is not present as
-		with pulpino? */
-		__asm volatile( "csrs mie, %0" :: "r"(0x880) );
-	}
-	#else
-	{
-		/* Enable external interrupts. */
-		__asm volatile( "csrs mie, %0" :: "r"(0x800) );
-	}
-	#endif /* ( configMTIME_BASE_ADDRESS != 0 ) && ( configMTIMECMP_BASE_ADDRESS != 0 ) */
-
+   	/* 使能SIE中S模式Timer中断和Soft中断，注意此处使能并不会立即响应
+	xPortStartFirstTask中将打开全局使能 */
+    csr_set(CSR_SIE, SIP_STIP);
+    csr_set(CSR_SIE, SIP_SSIP);
+	
 	xPortStartFirstTask();
 
 	/* Should not get here as after calling xPortStartFirstTask() only tasks

@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "os/include"
+                "os/include",
+                "trusted_domain/FreeRTOS-Kernel/include"
             ],
             "defines": []
         }

@@ -76,11 +76,9 @@ void vPortSetupTimerInterrupt( void ) __attribute__(( weak ));
 /*-----------------------------------------------------------*/
 
 /* Used to program the machine timer compare register. */
-uint64_t ullNextTime = 0ULL;
-const uint64_t *pullNextTime = &ullNextTime;
+
 const size_t uxTimerIncrementsForOneTick = ( size_t ) ( ( configCPU_CLOCK_HZ ) / ( configTICK_RATE_HZ ) ); /* Assumes increment won't go over 32-bits. */
-uint32_t const ullMachineTimerCompareRegisterBase = configMTIMECMP_BASE_ADDRESS;
-volatile uint64_t * pullMachineTimerCompareRegister = NULL;
+
 
 /* Set configCHECK_FOR_STACK_OVERFLOW to 3 to add ISR stack checking to task
 stack checking.  A problem in the ISR stack will trigger an assert, not call the
@@ -144,13 +142,16 @@ extern void xPortStartFirstTask( void );
 		/* Check the least significant two bits of mtvec are 00 - indicating
 		single vector mode. */
 		__asm volatile( "csrr %0, stvec" : "=r"( stvec ) );
+		//检查 stvec 设置的是直接访问还是向量访问
 		configASSERT( ( stvec & 0x03UL ) == 0 );
 
 		/* Check alignment of the interrupt stack - which is the same as the
 		stack that was being used by main() prior to the scheduler being
 		started. */
+		//检查栈顶的地址是否是对齐了
 		configASSERT( ( xISRStackTop & portBYTE_ALIGNMENT_MASK ) == 0 );
 
+		//初始化栈中的数据为 0
 		#ifdef configISR_STACK_SIZE_WORDS
 		{
 			memset( ( void * ) xISRStack, portISR_STACK_FILL_BYTE, sizeof( xISRStack ) );
@@ -161,12 +162,13 @@ extern void xPortStartFirstTask( void );
 
 	 /* 通过sbi设置Timer为滴答时钟 */
 	vPortSetupTimerInterrupt();
-
+	_puts( "Debug timer!\n");
    	/* 使能SIE中S模式Timer中断和Soft中断，注意此处使能并不会立即响应
 	xPortStartFirstTask中将打开全局使能 */
     csr_set(CSR_SIE, SIP_STIP);
     csr_set(CSR_SIE, SIP_SSIP);
 	
+	//启动第一个任务
 	xPortStartFirstTask();
 
 	/* Should not get here as after calling xPortStartFirstTask() only tasks
@@ -174,6 +176,22 @@ extern void xPortStartFirstTask( void );
 	return pdFAIL;
 }
 /*-----------------------------------------------------------*/
+
+
+void prvTaskExitError( void )
+{
+	/* A function that implements a task must not exit or attempt to return to
+	its caller as there is nothing to return to.  If a task wants to exit it
+	should instead call vTaskDelete( NULL ).
+
+	Artificially force an assert() to be triggered if configASSERT() is
+	defined, then stop here so application writers can catch the error. */
+	configASSERT( ulPortInterruptNesting == ~0UL );
+	//关闭中断
+	portDISABLE_INTERRUPTS();
+	for( ;; );
+}
+
 
 void vPortEndScheduler( void )
 {

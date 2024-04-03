@@ -55,6 +55,8 @@
  * registers.
  *
  */
+#include "riscv_encoding.h"
+
 #if __riscv_xlen == 64
 	#define portWORD_SIZE 8
 	#define store_x sd
@@ -572,14 +574,14 @@ xPortStartFirstTask:
  */
 .align 8
 .func
-pxPortInitialiseStack:
+pxPortInitialiseStack:                  // 函数参数应该为栈的地址
 	csrr t0, sstatus					/* Obtain current sstatus value. */
 	la t1, sstatus_init
-	lw t2, 0(t1)
-	or t0, t0, t2
+	lw t2, 0(t1)        // t2 = ~SSTATUS_FS
+	or t0, t0, t2	    // t0 = t0 | t2
 #ifdef __riscv_flen
-	lw t2, 4(t1)
-	and t0, t0, t2
+	lw t2, 4(t1)        // t2 = 0x1 << 13
+	and t0, t0, t2      // t0 = t0 & t2         清除fs位
 #endif
 	andi t0, t0, ~0x2					/* Ensure interrupts are disabled when the stack is restored within an ISR.  Required when a task is created after the schedulre has been started, otherwise interrupts would be disabled anyway. */
 	addi t1, x0, 0x120					/* Generate the value 0x120, which are the SPIE and SPP bits to set in mstatus. */

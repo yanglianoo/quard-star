@@ -29,7 +29,7 @@
 #ifndef PORTMACRO_H
 #define PORTMACRO_H
 
-#include "quart_star.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,7 +43,8 @@ extern "C" {
  * These settings should not be altered.
  *-----------------------------------------------------------
  */
-
+#include "quard_star.h"
+#include "FreeRTOSConfig.h"
 /* Type definitions. */
 #if __riscv_xlen == 64
 	#define portSTACK_TYPE			uint64_t

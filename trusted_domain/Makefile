@@ -74,7 +74,7 @@ PERIFLIB_SOURCES =
 #######################################
 # CFLAGS
 #######################################
-MCU = -march=rv64imafdc -mcmodel=medany -msmall-data-limit=8 -fmessage-length=0 -fsigned-char
+MCU = -march=rv64imad -mcmodel=medany -msmall-data-limit=8 -fmessage-length=0 -fsigned-char
 
 # macros for gcc
 # AS defines
@@ -145,7 +145,7 @@ $(OBJ_DIR)/%.o: %.S Makefile | $(OBJ_DIR)
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) $(LDSCRIPT) Makefile 
 	@echo LD $(notdir $@)
-	@$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+	@$(CC) $(OBJECTS) $(LDFLAGS) -Wl,-Map=freertos.map -o $@
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	@echo OBJCOPY $(notdir $@)
@@ -179,7 +179,7 @@ clean:
 # use gdb debug
 #######################################
 debug:
-	$(GDB) -x $(BUILD_DIR)/../gdb.sh
+	$(GDB) $(BUILD_DIR)/trusted_fw.elf -x  ./gdbinit
 
 #######################################
 # dependencies

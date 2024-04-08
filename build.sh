@@ -5,6 +5,7 @@ if [ ! -d "$SHELL_FOLDER/output" ]; then
 mkdir $SHELL_FOLDER/output
 fi  
 
+echo "------------------------- 编译qemu---------------------------------------"
 cd qemu-8.0.2
 if [ ! -d "$SHELL_FOLDER/output/qemu" ]; then  
 ./configure --prefix=$SHELL_FOLDER/output/qemu  --target-list=riscv64-softmmu --enable-gtk  --enable-virtfs --disable-gio
@@ -14,6 +15,7 @@ make install
 
 
 # # 编译 lowlevelboot
+echo "------------------------- 编译lowlevelboot-----------------------------"
 CROSS_PREFIX=riscv64-unknown-elf
 if [ ! -d "$SHELL_FOLDER/output/lowlevelboot" ]; then  
 mkdir $SHELL_FOLDER/output/lowlevelboot
@@ -29,6 +31,7 @@ $CROSS_PREFIX-objdump --source --demangle --disassemble --reloc --wide $SHELL_FO
 
 
 #编译 opensbi
+echo "------------------------- 编译opensbi --------------------------------"
 if [ ! -d "$SHELL_FOLDER/output/opensbi" ]; then  
 mkdir $SHELL_FOLDER/output/opensbi
 fi  
@@ -50,7 +53,6 @@ cd $SHELL_FOLDER/trusted_domain
 make CROSS_COMPILE=$CROSS_PREFIX- clean
 make CROSS_COMPILE=$CROSS_PREFIX- 
 cp ./build/trusted_fw.* $SHELL_FOLDER/output/trusted_domain/
-
 # # 编译uboot
 # if [ ! -d "$SHELL_FOLDER/output/uboot" ]; then  
 # mkdir $SHELL_FOLDER/output/uboot
@@ -67,7 +69,9 @@ cp ./build/trusted_fw.* $SHELL_FOLDER/output/trusted_domain/
 # cd $SHELL_FOLDER/dts
 # dtc -I dts -O dtb -o $SHELL_FOLDER/output/uboot/quard_star_uboot.dtb quard_star_uboot.dts
 
+
 # 编译os
+echo "------------------------- 编译timer os -------------------------------"
 if [ ! -d "$SHELL_FOLDER/output/os" ]; then  
 mkdir $SHELL_FOLDER/output/os
 fi
@@ -84,6 +88,7 @@ make clean
 
 
 # 合成firmware固件
+echo "------------------------- 合成firmware固件s ----------------------------"
 if [ ! -d "$SHELL_FOLDER/output/fw" ]; then  
 mkdir $SHELL_FOLDER/output/fw
 fi  

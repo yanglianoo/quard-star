@@ -88,7 +88,7 @@ make clean
 
 
 # 合成firmware固件
-echo "------------------------- 合成firmware固件s ----------------------------"
+echo "------------------------- 合成firmware固件 ----------------------------"
 if [ ! -d "$SHELL_FOLDER/output/fw" ]; then  
 mkdir $SHELL_FOLDER/output/fw
 fi  

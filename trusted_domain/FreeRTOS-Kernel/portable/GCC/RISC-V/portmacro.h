@@ -124,6 +124,30 @@ extern void vTaskExitCritical( void );    //退出临界区
 
 /* Architecture specific optimisations. */
 /*使用一个32位的整数作为bitmap来存储优先级*/
+// #ifndef configUSE_PORT_OPTIMISED_TASK_SELECTION
+// 	#define configUSE_PORT_OPTIMISED_TASK_SELECTION 1
+// #endif
+
+// #if( configUSE_PORT_OPTIMISED_TASK_SELECTION == 1 )
+
+// 	/* Check the configuration. */
+// 	#if( configMAX_PRIORITIES > 32 ) //检查系统配置的最大优先级数configMAX_PRIORITIES）是否超过了32。
+// 		#error configUSE_PORT_OPTIMISED_TASK_SELECTION can only be set to 1 when configMAX_PRIORITIES is less than or equal to 32.  It is very rare that a system requires more than 10 to 15 difference priorities as tasks that share a priority will time slice.
+// 	#endif
+
+// 	/* Store/clear the ready priorities in a bit map. */
+// 	//portRECORD_READY_PRIORITY通过位或操作（|=）来设置指定优先级对应位为1，表示有任务在该优先级上就绪。
+// 	//portRESET_READY_PRIORITY通过位与操作（&=~）来清除指定优先级对应的位，表示该优先级上没有就绪任务。
+// 	#define portRECORD_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) |= ( 1UL << ( uxPriority ) ) /
+// 	#define portRESET_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) &= ~( 1UL << ( uxPriority ) )
+
+// 	/*-----------------------------------------------------------*/
+// 	//portGET_HIGHEST_PRIORITY：这个宏用于快速找到就绪优先级位图中最高优先级的就绪任务。
+// 	//__builtin_clz 是一个编译器支持的计算前导0个数的内建函数
+// 	#define portGET_HIGHEST_PRIORITY( uxTopPriority, uxReadyPriorities ) uxTopPriority = ( 31UL - __builtin_clz( uxReadyPriorities ) )
+
+// #endif /* configUSE_PORT_OPTIMISED_TASK_SELECTION */
+/* Architecture specific optimisations. */
 #ifndef configUSE_PORT_OPTIMISED_TASK_SELECTION
 	#define configUSE_PORT_OPTIMISED_TASK_SELECTION 1
 #endif
@@ -131,23 +155,29 @@ extern void vTaskExitCritical( void );    //退出临界区
 #if( configUSE_PORT_OPTIMISED_TASK_SELECTION == 1 )
 
 	/* Check the configuration. */
-	#if( configMAX_PRIORITIES > 32 ) //检查系统配置的最大优先级数configMAX_PRIORITIES）是否超过了32。
+	#if( configMAX_PRIORITIES > 32 )
 		#error configUSE_PORT_OPTIMISED_TASK_SELECTION can only be set to 1 when configMAX_PRIORITIES is less than or equal to 32.  It is very rare that a system requires more than 10 to 15 difference priorities as tasks that share a priority will time slice.
 	#endif
 
 	/* Store/clear the ready priorities in a bit map. */
-	//portRECORD_READY_PRIORITY通过位或操作（|=）来设置指定优先级对应位为1，表示有任务在该优先级上就绪。
-	//portRESET_READY_PRIORITY通过位与操作（&=~）来清除指定优先级对应的位，表示该优先级上没有就绪任务。
-	#define portRECORD_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) |= ( 1UL << ( uxPriority ) ) /
+	#define portRECORD_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) |= ( 1UL << ( uxPriority ) )
 	#define portRESET_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) &= ~( 1UL << ( uxPriority ) )
 
 	/*-----------------------------------------------------------*/
-	//portGET_HIGHEST_PRIORITY：这个宏用于快速找到就绪优先级位图中最高优先级的就绪任务。
-	//__builtin_clz 是一个编译器支持的计算前导0个数的内建函数
-	#define portGET_HIGHEST_PRIORITY( uxTopPriority, uxReadyPriorities ) uxTopPriority = ( 31UL - __builtin_clz( uxReadyPriorities ) )
-
+	static inline uint32_t ucPortCountLeadingZeros(uint32_t x)
+	{
+		uint32_t numZeros;
+		if (!x)
+			return (sizeof(int) * 8);
+		numZeros = 0;
+		while (!(x & 0x80000000)) {
+			numZeros++;
+			x <<= 1;
+		} 
+		return numZeros;
+	}
+        #define portGET_HIGHEST_PRIORITY( uxTopPriority, uxReadyPriorities )    uxTopPriority = ( 31UL - ( uint32_t ) ucPortCountLeadingZeros( ( uxReadyPriorities ) ) )
 #endif /* configUSE_PORT_OPTIMISED_TASK_SELECTION */
-
 
 /*-----------------------------------------------------------*/
 

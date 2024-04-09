@@ -26,20 +26,15 @@ void task2(void *p_arg)
 
 static void vTaskCreate ()
 { 
-	_puts( "vTaskCreate\n");
 
-    xTaskCreate(task1,"task1",2048,NULL,4,NULL);
-    xTaskCreate(task2,"task2",2048,NULL,5,NULL);
-
-    vTaskDelete(NULL);
+    xTaskCreate(task1,"task1",1024,NULL,4,NULL);
+    xTaskCreate(task2,"task2",1024,NULL,4,NULL);
 }
 
 int main( void )
 {
 	_puts( "Hello FreeRTOS!\n");
     vTaskCreate();
-   /// xTaskCreate(vTaskCreate,"task creat",256,NULL,4,NULL);
-
 	vTaskStartScheduler();
 	return 0;
 }

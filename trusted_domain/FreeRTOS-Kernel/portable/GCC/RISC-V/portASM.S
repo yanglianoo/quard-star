@@ -77,17 +77,20 @@ portasmRESTORE_ADDITIONAL_REGISTERS macros - which can be defined in a chip
 specific version of freertos_risc_v_chip_specific_extensions.h.  See the notes
 at the top of this file. */
 
-#if __riscv_flen == 64
-	#define portCONTEXT_SIZE ( 62 * portWORD_SIZE )
-	#define store_fx fsd
-	#define load_fx fld
-#elif __riscv_xlen == 32
-	#define portCONTEXT_SIZE ( 62 * portWORD_SIZE )
-	#define store_fx fsw
-	#define load_fx flw
-#else
-	#define portCONTEXT_SIZE ( 30 * portWORD_SIZE )
-#endif
+/*
+# if __riscv_flen == 64
+# 	define portCONTEXT_SIZE ( 62 * portWORD_SIZE )
+# 	define store_fx fsd
+# 	define load_fx fld
+# elif __riscv_xlen == 32
+# 	define portCONTEXT_SIZE ( 62 * portWORD_SIZE )
+# 	define store_fx fsw
+# 	define load_fx flw
+# else
+*/
+
+#define portCONTEXT_SIZE ( 30 * portWORD_SIZE )
+
 
 .global xPortStartFirstTask
 .global freertos_risc_v_trap_handler
@@ -143,50 +146,6 @@ freertos_risc_v_trap_handler:
 
 	csrr t0, sstatus					/* Required for SPIE bit. */
 	store_x t0, 29 * portWORD_SIZE( sp )
-#ifdef __riscv_flen     /* 如果浮点单元被启用 */
-	csrr t2, sstatus
-	li t0, SSTATUS_FS   /* _UL(0x00006000) */
-	and t1,t2,t0        /* t1 = t2 & t0  检查sstatus的 fs字段 */
-	bne t1,t0,1f		/* 如果未启动fpu，jmp 1f */
-
-	store_fx f0, 30 * portWORD_SIZE( sp )
-	store_fx f1, 31 * portWORD_SIZE( sp )
-	store_fx f2, 32 * portWORD_SIZE( sp )
-	store_fx f3, 33 * portWORD_SIZE( sp )
-	store_fx f4, 34 * portWORD_SIZE( sp )
-	store_fx f5, 35 * portWORD_SIZE( sp )
-	store_fx f6, 36 * portWORD_SIZE( sp )
-	store_fx f7, 37 * portWORD_SIZE( sp )
-	store_fx f8, 38 * portWORD_SIZE( sp )
-	store_fx f9, 39 * portWORD_SIZE( sp )
-	store_fx f10, 40 * portWORD_SIZE( sp )
-	store_fx f11, 41 * portWORD_SIZE( sp )
-	store_fx f12, 42 * portWORD_SIZE( sp )
-	store_fx f13, 43 * portWORD_SIZE( sp )
-	store_fx f14, 44 * portWORD_SIZE( sp )
-	store_fx f15, 45 * portWORD_SIZE( sp )
-	store_fx f16, 46 * portWORD_SIZE( sp )
-	store_fx f17, 47 * portWORD_SIZE( sp )
-	store_fx f18, 48 * portWORD_SIZE( sp )
-	store_fx f19, 49 * portWORD_SIZE( sp )
-	store_fx f20, 50 * portWORD_SIZE( sp )
-	store_fx f21, 51 * portWORD_SIZE( sp )
-	store_fx f22, 52 * portWORD_SIZE( sp )
-	store_fx f23, 53 * portWORD_SIZE( sp )
-	store_fx f24, 54 * portWORD_SIZE( sp )
-	store_fx f25, 55 * portWORD_SIZE( sp )
-	store_fx f26, 56 * portWORD_SIZE( sp )
-	store_fx f27, 57 * portWORD_SIZE( sp )
-	store_fx f28, 58 * portWORD_SIZE( sp )
-	store_fx f29, 59 * portWORD_SIZE( sp )
-	store_fx f30, 60 * portWORD_SIZE( sp )
-	store_fx f31, 61 * portWORD_SIZE( sp )
-1:	//将sstatus寄存器的FS（Floating-Point Status）字段 设置成 10 表示Clean状态
-	li t0, (0x1 << 14)
-	csrs sstatus,t0
-	li t0, (0x1 << 13)
-	csrc sstatus,t0   
-#endif
 
 	csrr t0, sepc  //sepc 存储了中断返回地址
 	store_x t0, 0 * portWORD_SIZE( sp )
@@ -209,63 +168,6 @@ test_if_asynchronous:     				//参数为 scause的值，存放在a0寄存器中
 //异常
 handle_asynchronous:
 
-# #if( portasmHAS_MTIME != 0 )
-
-# 	test_if_mtimer:						/* If there is a CLINT then the mtimer is used to generate the tick interrupt. */
-
-# 		addi t0, x0, 1
-
-# 		slli t0, t0, __riscv_xlen - 1   /* LSB is already set, shift into MSB.  Shift 31 on 32-bit or 63 on 64-bit cores. */
-# 		addi t1, t0, 7					/* 0x8000[]0007 == machine timer interrupt. */
-# 		bne a0, t1, test_if_external_interrupt
-
-# 		load_x t0, pullMachineTimerCompareRegister  /* Load address of compare register into t0. */
-# 		load_x t1, pullNextTime  		/* Load the address of ullNextTime into t1. */
-
-# 		#if( __riscv_xlen == 32 )
-
-# 			/* Update the 64-bit mtimer compare match value in two 32-bit writes. */
-# 			li t4, -1
-# 			lw t2, 0(t1)				/* Load the low word of ullNextTime into t2. */
-# 			lw t3, 4(t1)				/* Load the high word of ullNextTime into t3. */
-# 			sw t4, 0(t0)				/* Low word no smaller than old value to start with - will be overwritten below. */
-# 			sw t3, 4(t0)				/* Store high word of ullNextTime into compare register.  No smaller than new value. */
-# 			sw t2, 0(t0)				/* Store low word of ullNextTime into compare register. */
-# 			lw t0, uxTimerIncrementsForOneTick	/* Load the value of ullTimerIncrementForOneTick into t0 (could this be optimized by storing in an array next to pullNextTime?). */
-# 			add t4, t0, t2				/* Add the low word of ullNextTime to the timer increments for one tick (assumes timer increment for one tick fits in 32-bits). */
-# 			sltu t5, t4, t2				/* See if the sum of low words overflowed (what about the zero case?). */
-# 			add t6, t3, t5				/* Add overflow to high word of ullNextTime. */
-# 			sw t4, 0(t1)				/* Store new low word of ullNextTime. */
-# 			sw t6, 4(t1)				/* Store new high word of ullNextTime. */
-
-# 		#endif /* __riscv_xlen == 32 */
-
-# 		#if( __riscv_xlen == 64 )
-
-# 			/* Update the 64-bit mtimer compare match value. */
-# 			ld t2, 0(t1)			 	/* Load ullNextTime into t2. */
-# 			sd t2, 0(t0)				/* Store ullNextTime into compare register. */
-# 			ld t0, uxTimerIncrementsForOneTick  /* Load the value of ullTimerIncrementForOneTick into t0 (could this be optimized by storing in an array next to pullNextTime?). */
-# 			add t4, t0, t2				/* Add ullNextTime to the timer increments for one tick. */
-# 			sd t4, 0(t1)				/* Store ullNextTime. */
-
-# 		#endif /* __riscv_xlen == 64 */
-
-# 		load_x sp, xISRStackTop			/* Switch to ISR stack before function call. */
-# 		jal xTaskIncrementTick
-# 		beqz a0, processed_source		/* Don't switch context if incrementing tick didn't unblock a task. */
-# 		jal vTaskSwitchContext
-# 		j processed_source
-
-# 	test_if_external_interrupt:			/* If there is a CLINT and the mtimer interrupt is not pending then check to see if an external interrupt is pending. */
-# 		addi t1, t1, 4					/* 0x80000007 + 4 = 0x8000000b == Machine external interrupt. */
-# 		bne a0, t1, as_yet_unhandled	/* Something as yet unhandled. */
-
-# #endif /* portasmHAS_MTIME */
-
-# 	load_x sp, xISRStackTop				/* Switch to ISR stack before function call. */
-# 	jal portasmHANDLE_INTERRUPT			/* Jump to the interrupt handler if there is no CLINT or if there is a CLINT and it has been determined that an external interrupt is pending. */
-# 	j processed_source
 
 test_if_ipi:						 //参数为 scause的值，存放在a0寄存器中
 	addi t0, x0, 1
@@ -319,56 +221,16 @@ processed_source:
 	load_x  sp, 0( t1 )				/* Read sp from first TCB member. */
 
 	/* Load sret with the address of the next instruction in the task to run next. */
-	load_x t0, 0 * portWORD_SIZE( sp )
+	load_x t0,  0( sp )
 	csrw sepc, t0
 
-#ifdef __riscv_flen
-	csrr t2, sstatus
-#endif
+
 
 	/* Load mstatus with the interrupt enable bits used by the task. */
 	load_x  t0, 29 * portWORD_SIZE( sp )   //读取保存在栈中的sstatus寄存器的值
 	csrw sstatus, t0				/* Required for SPIE bit. */
 
-#ifdef __riscv_flen
-	li t0, SSTATUS_FS
-	and t1,t2,t0
-	bne t1,t0,1f
 
-	load_fx f0, 30 * portWORD_SIZE( sp )
-	load_fx f1, 31 * portWORD_SIZE( sp )
-	load_fx f2, 32 * portWORD_SIZE( sp )
-	load_fx f3, 33 * portWORD_SIZE( sp )
-	load_fx f4, 34 * portWORD_SIZE( sp )
-	load_fx f5, 35 * portWORD_SIZE( sp )
-	load_fx f6, 36 * portWORD_SIZE( sp )
-	load_fx f7, 37 * portWORD_SIZE( sp )
-	load_fx f8, 38 * portWORD_SIZE( sp )
-	load_fx f9, 39 * portWORD_SIZE( sp )
-	load_fx f10, 40 * portWORD_SIZE( sp )
-	load_fx f11, 41 * portWORD_SIZE( sp )
-	load_fx f12, 42 * portWORD_SIZE( sp )
-	load_fx f13, 43 * portWORD_SIZE( sp )
-	load_fx f14, 44 * portWORD_SIZE( sp )
-	load_fx f15, 45 * portWORD_SIZE( sp )
-	load_fx f16, 46 * portWORD_SIZE( sp )
-	load_fx f17, 47 * portWORD_SIZE( sp )
-	load_fx f18, 48 * portWORD_SIZE( sp )
-	load_fx f19, 49 * portWORD_SIZE( sp )
-	load_fx f20, 50 * portWORD_SIZE( sp )
-	load_fx f21, 51 * portWORD_SIZE( sp )
-	load_fx f22, 52 * portWORD_SIZE( sp )
-	load_fx f23, 53 * portWORD_SIZE( sp )
-	load_fx f24, 54 * portWORD_SIZE( sp )
-	load_fx f25, 55 * portWORD_SIZE( sp )
-	load_fx f26, 56 * portWORD_SIZE( sp )
-	load_fx f27, 57 * portWORD_SIZE( sp )
-	load_fx f28, 58 * portWORD_SIZE( sp )
-	load_fx f29, 59 * portWORD_SIZE( sp )
-	load_fx f30, 60 * portWORD_SIZE( sp )
-	load_fx f31, 61 * portWORD_SIZE( sp )
-1:	
-#endif
 	//从栈中恢复上下文寄存器
 	load_x  x1, 1 * portWORD_SIZE( sp )
 	load_x  x5, 2 * portWORD_SIZE( sp )		/* t0 */
@@ -431,47 +293,12 @@ xPortStartFirstTask:
 	la t0, freertos_risc_v_trap_handler    //设置异常处理地址
 	csrw stvec, t0
 
-	//加载任务的栈指针
+	//加载任务的TCB指针
 	load_x  sp, pxCurrentTCB			/* Load pxCurrentTCB. */
+	//加载此任务的栈地址
 	load_x  sp, 0( sp )				 	/* Read sp from first TCB member. */
 
 	load_x  x1, 0( sp ) /* Note for starting the scheduler the exception return address is used as the function return address. */
-
-# #ifdef __riscv_flen
-# 	load_fx f0, 30 * portWORD_SIZE( sp )
-# 	load_fx f1, 31 * portWORD_SIZE( sp )
-# 	load_fx f2, 32 * portWORD_SIZE( sp )
-# 	load_fx f3, 33 * portWORD_SIZE( sp )
-# 	load_fx f4, 34 * portWORD_SIZE( sp )
-# 	load_fx f5, 35 * portWORD_SIZE( sp )
-# 	load_fx f6, 36 * portWORD_SIZE( sp )
-# 	load_fx f7, 37 * portWORD_SIZE( sp )
-# 	load_fx f8, 38 * portWORD_SIZE( sp )
-# 	load_fx f9, 39 * portWORD_SIZE( sp )
-# 	load_fx f10, 40 * portWORD_SIZE( sp )
-# 	load_fx f11, 41 * portWORD_SIZE( sp )
-# 	load_fx f12, 42 * portWORD_SIZE( sp )
-# 	load_fx f13, 43 * portWORD_SIZE( sp )
-# 	load_fx f14, 44 * portWORD_SIZE( sp )
-# 	load_fx f15, 45 * portWORD_SIZE( sp )
-# 	load_fx f16, 46 * portWORD_SIZE( sp )
-# 	load_fx f17, 47 * portWORD_SIZE( sp )
-# 	load_fx f18, 48 * portWORD_SIZE( sp )
-# 	load_fx f19, 49 * portWORD_SIZE( sp )
-# 	load_fx f20, 50 * portWORD_SIZE( sp )
-# 	load_fx f21, 51 * portWORD_SIZE( sp )
-# 	load_fx f22, 52 * portWORD_SIZE( sp )
-# 	load_fx f23, 53 * portWORD_SIZE( sp )
-# 	load_fx f24, 54 * portWORD_SIZE( sp )
-# 	load_fx f25, 55 * portWORD_SIZE( sp )
-# 	load_fx f26, 56 * portWORD_SIZE( sp )
-# 	load_fx f27, 57 * portWORD_SIZE( sp )
-# 	load_fx f28, 58 * portWORD_SIZE( sp )
-# 	load_fx f29, 59 * portWORD_SIZE( sp )
-# 	load_fx f30, 60 * portWORD_SIZE( sp )
-# 	load_fx f31, 61 * portWORD_SIZE( sp )
-# #endif
-
 
 	load_x  x6, 3 * portWORD_SIZE( sp )		/* t1 */
 	load_x  x7, 4 * portWORD_SIZE( sp )		/* t2 */
@@ -572,39 +399,27 @@ xPortStartFirstTask:
  * [chip specific registers go here]
  * pxCode
  */
+
 .align 8
 .func
-pxPortInitialiseStack:                  // 函数参数应该为栈的地址
-	csrr t0, sstatus					/* Obtain current sstatus value. */
-	la t1, sstatus_init
-	lw t2, 0(t1)        // t2 = ~SSTATUS_FS
-	or t0, t0, t2	    // t0 = t0 | t2
-#ifdef __riscv_flen
-	lw t2, 4(t1)        // t2 = 0x1 << 13
-	and t0, t0, t2      // t0 = t0 & t2         清除fs位
-#endif
+pxPortInitialiseStack:                  // 函数参数应该为栈的地址放入 a0 寄存器
+	csrr t0, sstatus					/* t0 = sstatus 保存当前sstatus寄存器的值到t0寄存器中 */
 	andi t0, t0, ~0x2					/* Ensure interrupts are disabled when the stack is restored within an ISR.  Required when a task is created after the schedulre has been started, otherwise interrupts would be disabled anyway. */
 	addi t1, x0, 0x120					/* Generate the value 0x120, which are the SPIE and SPP bits to set in mstatus. */
 	or t0, t0, t1						/* Set SPIE and SPP bits in sstatus value. */
 
-#ifdef __riscv_flen
-	addi a0, a0, -(32 * portWORD_SIZE)	/* Space for registers x11-x31. */
-#endif
+
 	addi a0, a0, -portWORD_SIZE
 	store_x t0, 0(a0)					/* sstatus onto the stack. */
 	addi a0, a0, -(22 * portWORD_SIZE)	/* Space for registers x11-x31. */
 	store_x a2, 0(a0)					/* Task parameters (pvParameters parameter) goes into register X10/a0 on the stack. */
 	addi a0, a0, -(6 * portWORD_SIZE)	/* Space for registers x5-x9. */
-	la t0, prvTaskExitError
+	la t0, prvTaskExitError             /* 加载prvTaskExitError函数的地址到 t0 */
 	store_x t0, 0(a0)					/* Return address onto the stack, could be portTASK_RETURN_ADDRESS */
 
 	addi a0, a0, -portWORD_SIZE
 	store_x a1, 0(a0)					/* mret value (pxCode parameter) onto the stack. */
 	ret
-sstatus_init:
-	.word (~SSTATUS_FS)
-#ifdef __riscv_flen
-	.word (0x1 << 13)
-#endif
+
 	.endfunc
 /*-----------------------------------------------------------*/

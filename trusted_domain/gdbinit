@@ -1,4 +1,4 @@
 set disassemble-next-line on
-b *0x00000000bf802c00 
+b prvAddNewTaskToReadyList
 target remote : 1234
 c

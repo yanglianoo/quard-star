@@ -44,25 +44,25 @@
 #define configMTIME_BASE_ADDRESS		( CLINT_ADDR + CLINT_MTIME )
 #define configMTIMECMP_BASE_ADDRESS		( CLINT_ADDR + CLINT_MTIMECMP )
 
-#define configUSE_PREEMPTION			1
-#define configUSE_IDLE_HOOK				0
-#define configUSE_TICK_HOOK				0
-#define configCPU_CLOCK_HZ				( 10000000 )
-#define configTICK_RATE_HZ				( ( TickType_t ) 100 )
-#define configMAX_PRIORITIES			( 7 )
+#define configUSE_PREEMPTION			1                       // 任务抢占
+#define configUSE_IDLE_HOOK				0                       // IDLE 任务钩子函数
+#define configUSE_TICK_HOOK				0                       // 时钟中断 钩子函数
+#define configCPU_CLOCK_HZ				( 10000000 )            //RTC时钟频率
+#define configTICK_RATE_HZ				( ( TickType_t ) 100 )  //时钟中断频率
+#define configMAX_PRIORITIES			( 7 )                   //最高优先级
 #define configMINIMAL_STACK_SIZE		( ( unsigned short ) 512 )
 #define configTOTAL_HEAP_SIZE			( ( size_t ) 64500 )
-#define configMAX_TASK_NAME_LEN			( 16 )
+#define configMAX_TASK_NAME_LEN			( 16 )                  //任务名的长度
 #define configUSE_16_BIT_TICKS			0
 #define configIDLE_SHOULD_YIELD			0
-#define configUSE_MUTEXES				1
+#define configUSE_MUTEXES				1                       //启用互斥锁
 #define configQUEUE_REGISTRY_SIZE		8
-#define configCHECK_FOR_STACK_OVERFLOW	0
-#define configUSE_RECURSIVE_MUTEXES		1
+#define configCHECK_FOR_STACK_OVERFLOW	0 
+#define configUSE_RECURSIVE_MUTEXES		1                       //启动递归互斥锁
 #define configUSE_MALLOC_FAILED_HOOK	0
 #define configUSE_APPLICATION_TASK_TAG	0
-#define configUSE_COUNTING_SEMAPHORES	1
-#define configUSE_PORT_OPTIMISED_TASK_SELECTION 1
+#define configUSE_COUNTING_SEMAPHORES	1                       //启用信号量
+#define configUSE_PORT_OPTIMISED_TASK_SELECTION 1               
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 			0

@@ -53,6 +53,7 @@ cd $SHELL_FOLDER/trusted_domain
 make CROSS_COMPILE=$CROSS_PREFIX- clean
 make CROSS_COMPILE=$CROSS_PREFIX- 
 cp ./build/trusted_fw.* $SHELL_FOLDER/output/trusted_domain/
+rm -rf ./build/
 # # 编译uboot
 # if [ ! -d "$SHELL_FOLDER/output/uboot" ]; then  
 # mkdir $SHELL_FOLDER/output/uboot

@@ -1,6 +1,6 @@
 #include "riscv_encoding.h"
 #include "quard_star.h"
-#include "riscv-reg.h"
+#include "riscv_reg.h"
 
 
 	.section .init
@@ -17,8 +17,8 @@ _start:  #程序入口地址
 	li   a1, PRIM_HART     #将核心号加载到a1寄存器中
 	bne  a0, a1, secondary #比较核心号是否相等，如果不等，跳转到secondary处执行
 
-  	csrw sie, 0     #sie寄存器用于控制中断，禁用所有中断
-  	csrw sip, 0     #sip用于标识中断中断标志位，清楚所有的中断的标志位
+  	csrw sie, 0     	   #sie寄存器用于控制中断，禁用所有中断
+  	csrw sip, 0            #sip用于标识中断中断标志位，清楚所有的中断的标志位
 	/* set to disable FPU */
 	li t0, SSTATUS_FS
 	csrc sstatus, t0
@@ -35,11 +35,11 @@ _start:  #程序入口地址
 	la a2, _edata       //数据段结束地址
 	bgeu a1, a2, 2f     //
 1:   //将数据段的数据从物理内存复制到dram
-	LOAD t0, (a0)
-	STOR t0, (a1)
-	addi a0, a0, REGSIZE
-	addi a1, a1, REGSIZE
-	bltu a1, a2, 1b       //b代表向上寻找最近的同名标签
+	LOAD t0, (a0)          // 从 a0 地址处加载64bit数据到t0寄存器
+	STOR t0, (a1)          // 把 t0 中的数据写入到a1 地址处
+	addi a0, a0, REGSIZE   // 增加 a0
+	addi a1, a1, REGSIZE   // 增加 a1
+	bltu a1, a2, 1b       //如果 a1 < a2 则跳转 b代表向上寻找最近的同名标签
 
 2:
 	// Clear bss section

@@ -867,14 +867,17 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
 
                         /* If there was a task waiting for data to arrive on the
                          * queue then unblock it now. */
+                        //判断等待读取的任务链表是否为空
                         if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == pdFALSE )
                         {
+                            //从Receive链表中移除任务，并且将移除的任务唤醒添加到就绪链表中
                             if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != pdFALSE )
                             {
                                 /* The unblocked task has a priority higher than
                                  * our own so yield immediately.  Yes it is ok to do
                                  * this from within the critical section - the kernel
                                  * takes care of that. */
+                                //执行任务切换
                                 queueYIELD_IF_USING_PREEMPTION();
                             }
                             else

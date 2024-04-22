@@ -59,11 +59,11 @@
             tdomain: trusted-domain {
                 compatible = "opensbi,domain,instance";
                 possible-harts = <&cpu7>;
-                regions = <&tmem0 0x7>, <&tmem1 0x7>, <&tmem2 0x7>, <&tmem3 0x7>, <&tmem4 0x7>, <&tuart 0x7>, <&allmem 0x7>;
+                regions = <&tmem0 0x7>, <&tmem1 0x7>, <&tmem2 0x7>, <&tmem3 0x7>, <&tmem4 0x7>, <&tuart 0x7>, <&allmem 0x7>; /* 各个内存/mmio区域的权限，3bit读写运行权限 0x7拥有全部权限 */
                 boot-hart = <&cpu7>;
                 next-arg1 = <0x0 0x00000000>;
 		        next-addr = <0x0 0xBF800000>;
-		        next-mode = <0x1>;
+		        next-mode = <0x1>; /* 下级程序的允许模式 0为U模式，1为S模式 */
                 system-reset-allowed;
 			};
 
@@ -72,9 +72,9 @@
 		        possible-harts = <&cpu0 &cpu1 &cpu2 &cpu3 &cpu4 &cpu5 &cpu6>;
 		        regions = <&tmem0 0x0>, <&tmem1 0x0>, <&tmem2 0x0>, <&tmem3 0x0>, <&tmem4 0x0>, <&tuart 0x0>, <&allmem 0x7>;
 				boot-hart = <&cpu0>;
-		        next-arg1 = <0x0 0xB0000000>;
-		        next-addr = <0x0 0xB0200000>;
-		        next-mode = <0x1>;
+		        next-arg1 = <0x0 0x82000000>;
+		        next-addr = <0x0 0x80200000>;
+		        next-mode = <0x1>;/* 下级程序的允许模式 0为U模式，1为S模式 */
 		        system-reset-allowed;
 		    };
 		};

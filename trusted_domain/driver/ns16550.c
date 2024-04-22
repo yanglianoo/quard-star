@@ -4,7 +4,7 @@
 
 
 /* 寄存器定义 */
-#define REG_RBR		0x00 /* Receiver buffer reg. */
+#define REG_RHR		0x00 /* Receiver buffer reg. */
 #define REG_THR		0x00 /* Transmitter holding reg. */
 #define REG_IER		0x01 /* Interrupt enable reg. */
 #define REG_IIR		0x02 /* Interrupt ID reg. */
@@ -43,7 +43,7 @@ void ns16550_tx(uintptr_t addr, unsigned char c)
 {
     //读数据和写数据用的同一个寄存器
     while ((readb(addr + REG_LSR) & LSR_THRE) == 0){
-        //正在写，轮询等待
+        //正在读，轮询等待
     }
     
     writeb(c, addr + REG_THR);

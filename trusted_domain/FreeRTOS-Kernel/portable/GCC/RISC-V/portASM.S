@@ -71,25 +71,9 @@
 
 
 
-/* Only the standard core registers are stored by default.  Any additional
-registers must be saved by the portasmSAVE_ADDITIONAL_REGISTERS and
-portasmRESTORE_ADDITIONAL_REGISTERS macros - which can be defined in a chip
-specific version of freertos_risc_v_chip_specific_extensions.h.  See the notes
-at the top of this file. */
 
-/*
-# if __riscv_flen == 64
-# 	define portCONTEXT_SIZE ( 62 * portWORD_SIZE )
-# 	define store_fx fsd
-# 	define load_fx fld
-# elif __riscv_xlen == 32
-# 	define portCONTEXT_SIZE ( 62 * portWORD_SIZE )
-# 	define store_fx fsw
-# 	define load_fx flw
-# else
-*/
 
-#define portCONTEXT_SIZE ( 30 * portWORD_SIZE )
+#define portCONTEXT_SIZE ( 30 * portWORD_SIZE )   //任务上下文占用内存大小
 
 
 .global xPortStartFirstTask
@@ -113,7 +97,7 @@ at the top of this file. */
 freertos_risc_v_trap_handler:
     // x2 为sp ，不需要保存
 	// x3 为gp，全局指针，基本不变也不需要保存
-	// x4 为tp，线程指针，中断上下文不需要保存
+	// x4 为tp，线程指针，不需要保存
 	addi sp, sp, -portCONTEXT_SIZE
 	store_x x1, 1 * portWORD_SIZE( sp )
 	store_x x5, 2 * portWORD_SIZE( sp )
@@ -155,9 +139,6 @@ freertos_risc_v_trap_handler:
 
 	csrr a0, scause
 	csrr a1, sepc
-
-
-
 
 //判断是中断还是异常
 test_if_asynchronous:     				//参数为 scause的值，存放在a0寄存器中
@@ -327,7 +308,7 @@ xPortStartFirstTask:
 	load_x  x30, 27 * portWORD_SIZE( sp )	/* t5 */
 	load_x  x31, 28 * portWORD_SIZE( sp )	/* t6 */
 
-	load_x  x5, 29 * portWORD_SIZE( sp )	/* Initial mstatus into x5 (t0) */
+	load_x  x5, 29 * portWORD_SIZE( sp )	/* Initial sstatus into x5 (t0) */
 	ori x5, x5, 0x2					    	/* Set SIE bit so the first task starts with interrupts enabled - required as returns with ret not eret. */
 	csrrw  x0, sstatus, x5					/* Interrupts enabled from here! */
 	load_x  x5, 2 * portWORD_SIZE( sp )		/* Initial x5 (t0) value. */
@@ -367,7 +348,7 @@ xPortStartFirstTask:
  * where the global and thread pointers are currently assumed to be constant so
  * are not saved:
  *
- * mstatus
+ * sstatus
  * x31
  * x30
  * x29
@@ -405,7 +386,7 @@ xPortStartFirstTask:
 pxPortInitialiseStack:                  // 函数参数应该为栈的地址放入 a0 寄存器
 	csrr t0, sstatus					/* t0 = sstatus 保存当前sstatus寄存器的值到t0寄存器中 */
 	andi t0, t0, ~0x2					/* Ensure interrupts are disabled when the stack is restored within an ISR.  Required when a task is created after the schedulre has been started, otherwise interrupts would be disabled anyway. */
-	addi t1, x0, 0x120					/* Generate the value 0x120, which are the SPIE and SPP bits to set in mstatus. */
+	addi t1, x0, 0x120					/* Generate the value 0x120, which are the SPIE and SPP bits to set in sstatus. */
 	or t0, t0, t1						/* Set SPIE and SPP bits in sstatus value. */
 
 
@@ -418,7 +399,7 @@ pxPortInitialiseStack:                  // 函数参数应该为栈的地址放�
 	store_x t0, 0(a0)					/* Return address onto the stack, could be portTASK_RETURN_ADDRESS */
 
 	addi a0, a0, -portWORD_SIZE
-	store_x a1, 0(a0)					/* mret value (pxCode parameter) onto the stack. */
+	store_x a1, 0(a0)					/* sret value (pxCode parameter) onto the stack. */
 	ret
 
 	.endfunc

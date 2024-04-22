@@ -54,9 +54,9 @@ _start:
     li		a0,	0x204
 	slli	a0,	a0, 20      //a0 = 0x20400000
     li		a1,	0xbf8
-	slli	a1,	a1, 20      //a1 = 0xb0000000
+	slli	a1,	a1, 20      //a1 = 0xbf800000
     li		a2,	0xbfc
-	slli	a2,	a2, 20      //a2 = 0xb0400000
+	slli	a2,	a2, 20      //a2 = 0xbfc00000
 	load_data a0,a1,a2
 	
 	# //load qemu_uboot.dtb
